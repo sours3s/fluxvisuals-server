@@ -11,10 +11,12 @@ namespace AuthServer.Controllers;
 public class ModController : ControllerBase
 {
     private readonly AuthDbContext _db;
+    private readonly IConfiguration _configuration;
 
-    public ModController(AuthDbContext db)
+    public ModController(AuthDbContext db, IConfiguration configuration)
     {
         _db = db;
+        _configuration = configuration;
     }
 
     [HttpGet("version")]
@@ -25,11 +27,14 @@ public class ModController : ControllerBase
         if (settings == null)
             return NotFound();
 
-        // URL мода строится из адреса, с которого пришёл запрос — работает на любом хосте/домене.
-        // Если админ явно задал свой URL (например, GitHub) — используем его.
+        // Приоритет: URL из админки (БД) → из appsettings (Mod:DownloadUrl) → по адресу запроса.
         string downloadUrl = settings.ModDownloadUrl;
         if (string.IsNullOrWhiteSpace(downloadUrl) ||
             downloadUrl.StartsWith("CHANGE", StringComparison.OrdinalIgnoreCase))
+        {
+            downloadUrl = _configuration["Mod:DownloadUrl"] ?? "";
+        }
+        if (string.IsNullOrWhiteSpace(downloadUrl))
         {
             downloadUrl = $"{Request.Scheme}://{Request.Host}/mods/fluxvisuals-mod-1.21.11.jar";
         }
