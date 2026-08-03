@@ -213,7 +213,9 @@
             const headers = { 'Content-Type': 'application/json', ...options.headers };
             if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
             const res = await fetch(API_BASE + path, { ...options, headers });
-            if (res.status === 401) { logout(); return null; }
+            // 401 = нет токена, 403 = роль в токене устарела (напр. была client, стала admin).
+            // В обоих случаях токен недействителен — сбрасываем и просим войти заново.
+            if (res.status === 401 || res.status === 403) { logout(); return null; }
             return res;
         }
 

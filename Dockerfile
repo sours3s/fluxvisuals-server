@@ -1,6 +1,3 @@
-# FluxVisuals AuthServer — собирается прямо на Render (образ сборки → образ запуска)
-# Не нужно ничего публиковать заранее: Render сам выполнит dotnet publish.
-
 # --- Стадия сборки: SDK ---
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
@@ -10,6 +7,11 @@ RUN dotnet publish AuthServer/AuthServer.csproj -c Release -o /app
 # --- Стадия запуска: лёгкий runtime ---
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
+
+# Устанавливаем недостающую системную библиотеку для Npgsql/GSSAPI
+RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app ./
 EXPOSE 5001
 
