@@ -106,6 +106,13 @@ public class AdminController : ControllerBase
         var user = await _db.Users.FindAsync(id);
         if (user == null) return NotFound();
 
+        // Сначала связанные записи — иначе FK-нарушение при удалении → 500
+        var orders = await _db.PaymentOrders.Where(o => o.UserId == id).ToListAsync();
+        if (orders.Count > 0) _db.PaymentOrders.RemoveRange(orders);
+
+        var logs = await _db.AuthLogs.Where(l => l.UserId == id).ToListAsync();
+        if (logs.Count > 0) _db.AuthLogs.RemoveRange(logs);
+
         _db.Users.Remove(user);
         await _db.SaveChangesAsync();
         return Ok();
