@@ -73,17 +73,18 @@ public class AdminController : ControllerBase
 
         user.IsActive = req.IsActive;
 
-        // Выдача доступа
+        // Выдача доступа. Роль "client" получает только тот, кто ещё не админ:
+        // иначе выдача доступа админу сбросит его роль на client и он потеряет админку.
         if (req.GrantDays is > 0)
         {
-            user.Role = "client";
+            if (user.Role != "admin") user.Role = "client";
             var now = DateTime.UtcNow;
             var baseTime = user.AccessExpiresAt != null && user.AccessExpiresAt > now ? user.AccessExpiresAt.Value : now;
             user.AccessExpiresAt = baseTime.AddDays(req.GrantDays.Value);
         }
         if (req.SetLifetime)
         {
-            user.Role = "client";
+            if (user.Role != "admin") user.Role = "client";
             user.AccessExpiresAt = null; // пожизненно
         }
         if (req.ClearAccess)

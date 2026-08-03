@@ -93,6 +93,22 @@ using (var scope = app.Services.CreateScope())
         db.Users.Add(admin);
         await db.SaveChangesAsync();
     }
+
+    // Аварийный сброс админа: если в конфиге (или env FLUXVISUALS_BOOTSTRAP_ADMIN)
+    // указано имя пользователя, он становится админом при старте.
+    // Нужно, если роль случайно сбита на client (например, старым багом выдачи доступа).
+    var bootstrapAdmin = builder.Configuration["BootstrapAdmin"]
+        ?? Environment.GetEnvironmentVariable("FLUXVISUALS_BOOTSTRAP_ADMIN");
+    if (!string.IsNullOrWhiteSpace(bootstrapAdmin))
+    {
+        var target = await db.Users.FirstOrDefaultAsync(u => u.Username == bootstrapAdmin);
+        if (target != null)
+        {
+            target.Role = "admin";
+            target.IsActive = true;
+            await db.SaveChangesAsync();
+        }
+    }
 }
 
 if (app.Environment.IsDevelopment())

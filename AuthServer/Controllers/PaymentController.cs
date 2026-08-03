@@ -147,7 +147,7 @@ public class PaymentController : ControllerBase
             var user = await _db.Users.FindAsync(order.UserId, ct);
             if (user != null)
             {
-                user.Role = "client";
+                if (user.Role != "admin") user.Role = "client"; // админа не сбрасываем
                 var now = DateTime.UtcNow;
                 if (order.Lifetime)
                 {
