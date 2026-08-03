@@ -22,7 +22,13 @@ public class User
     [MaxLength(500)]
     public string? Hwid { get; set; }
 
-    public bool IsAdmin { get; set; } = false;
+    /// <summary>Роль: "admin" | "client" (купил доступ) | "user" (обычный, без доступа).</summary>
+    [Required]
+    [MaxLength(20)]
+    public string Role { get; set; } = "user";
+
+    /// <summary>Срок доступа для client. null = пожизненно.</summary>
+    public DateTime? AccessExpiresAt { get; set; }
 
     public bool IsActive { get; set; } = true;
 
@@ -31,6 +37,16 @@ public class User
     public DateTime? LastLoginAt { get; set; }
 
     public DateTime? HwidLockedAt { get; set; }
+
+    public bool IsAdminRole => Role == "admin";
+
+    /// <summary>Есть ли право пользоваться клиентом: роль client/admin и срок не истёк (или пожизненно).</summary>
+    public bool HasAccess(DateTime now)
+    {
+        if (Role != "client" && Role != "admin") return false;
+        if (!IsActive) return false;
+        return AccessExpiresAt == null || AccessExpiresAt > now;
+    }
 
     public void SetPassword(string password)
     {
@@ -97,4 +113,41 @@ public class AppSettings
     public int JwtExpiryHours { get; set; } = 24;
 
     public string ModDownloadUrl { get; set; } = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.0.0/fluxvisuals-mod-1.21.11.jar";
+}
+
+public class PaymentOrder
+{
+    [Key]
+    public int Id { get; set; }
+
+    public int UserId { get; set; }
+
+    [ForeignKey("UserId")]
+    public User? User { get; set; }
+
+    [MaxLength(30)]
+    public string PlanId { get; set; } = "";
+
+    public decimal Amount { get; set; }
+
+    [MaxLength(10)]
+    public string Currency { get; set; } = "USD";
+
+    /// <summary>pending | paid | cancelled</summary>
+    [MaxLength(20)]
+    public string Status { get; set; } = "pending";
+
+    /// <summary>Инвойс/счёт на стороне платёжного шлюза.</summary>
+    [MaxLength(200)]
+    public string? ExternalId { get; set; }
+
+    /// <summary>Сколько дней выдаётся (если не lifetime).</summary>
+    public int? GrantedDays { get; set; }
+
+    /// <summary>Пожизненный доступ.</summary>
+    public bool Lifetime { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public DateTime? PaidAt { get; set; }
 }

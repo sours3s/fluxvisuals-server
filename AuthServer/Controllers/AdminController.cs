@@ -21,13 +21,17 @@ public class AdminController : ControllerBase
     [HttpGet("users")]
     public async Task<IActionResult> GetUsers()
     {
+        var now = DateTime.UtcNow;
         var users = await _db.Users
+            .OrderBy(u => u.Id)
             .Select(u => new
             {
                 u.Id,
                 u.Username,
-                u.IsAdmin,
+                u.Role,
                 u.IsActive,
+                u.AccessExpiresAt,
+                HasAccess = u.Role != "user" && u.IsActive && (u.AccessExpiresAt == null || u.AccessExpiresAt > now),
                 u.CreatedAt,
                 u.LastLoginAt,
                 u.Hwid,
@@ -46,12 +50,13 @@ public class AdminController : ControllerBase
         if (await _db.Users.AnyAsync(u => u.Username == req.Username))
             return Conflict(new { error = "Username already exists" });
 
-        var user = new User { Username = req.Username, IsAdmin = req.IsAdmin };
+        var role = NormalizeRole(req.Role);
+        var user = new User { Username = req.Username, Role = role };
         user.SetPassword(req.Password);
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
 
-        return Ok(new { id = user.Id, username = user.Username });
+        return Ok(new { id = user.Id, username = user.Username, role });
     }
 
     [HttpPut("users/{id}")]
@@ -63,14 +68,35 @@ public class AdminController : ControllerBase
         if (!string.IsNullOrWhiteSpace(req.Password))
             user.SetPassword(req.Password);
 
-        user.IsAdmin = req.IsAdmin;
+        if (!string.IsNullOrWhiteSpace(req.Role))
+            user.Role = NormalizeRole(req.Role);
+
         user.IsActive = req.IsActive;
+
+        // Выдача доступа
+        if (req.GrantDays is > 0)
+        {
+            user.Role = "client";
+            var now = DateTime.UtcNow;
+            var baseTime = user.AccessExpiresAt != null && user.AccessExpiresAt > now ? user.AccessExpiresAt.Value : now;
+            user.AccessExpiresAt = baseTime.AddDays(req.GrantDays.Value);
+        }
+        if (req.SetLifetime)
+        {
+            user.Role = "client";
+            user.AccessExpiresAt = null; // пожизненно
+        }
+        if (req.ClearAccess)
+        {
+            if (user.Role == "client") user.Role = "user";
+            user.AccessExpiresAt = null;
+        }
 
         if (req.ResetHwid)
             user.Hwid = null;
 
         await _db.SaveChangesAsync();
-        return Ok(new { id = user.Id, username = user.Username });
+        return Ok(new { id = user.Id, username = user.Username, role = user.Role, accessExpiresAt = user.AccessExpiresAt });
     }
 
     [HttpDelete("users/{id}")]
@@ -108,22 +134,28 @@ public class AdminController : ControllerBase
     [HttpGet("stats")]
     public async Task<IActionResult> GetStats()
     {
-        var totalUsers = await _db.Users.CountAsync();
-        var activeUsers = await _db.Users.CountAsync(u => u.IsActive);
-        var adminUsers = await _db.Users.CountAsync(u => u.IsAdmin);
-        var hwidLocked = await _db.Users.CountAsync(u => !string.IsNullOrEmpty(u.Hwid));
-        var recentLogins = await _db.AuthLogs.CountAsync(l => l.Action == "login" && l.Success && l.CreatedAt > DateTime.UtcNow.AddDays(-7));
-
+        var now = DateTime.UtcNow;
         return Ok(new
         {
-            totalUsers,
-            activeUsers,
-            adminUsers,
-            hwidLocked,
-            recentLogins
+            totalUsers = await _db.Users.CountAsync(),
+            activeUsers = await _db.Users.CountAsync(u => u.IsActive),
+            admins = await _db.Users.CountAsync(u => u.Role == "admin"),
+            clients = await _db.Users.CountAsync(u => u.Role == "client"),
+            users = await _db.Users.CountAsync(u => u.Role == "user"),
+            clientsWithAccess = await _db.Users.CountAsync(u => u.Role == "client" && u.IsActive && (u.AccessExpiresAt == null || u.AccessExpiresAt > now)),
+            expiredClients = await _db.Users.CountAsync(u => u.Role == "client" && u.AccessExpiresAt != null && u.AccessExpiresAt <= now),
+            hwidLocked = await _db.Users.CountAsync(u => !string.IsNullOrEmpty(u.Hwid)),
+            recentLogins = await _db.AuthLogs.CountAsync(l => l.Action == "login" && l.Success && l.CreatedAt > now.AddDays(-7))
         });
+    }
+
+    private static string NormalizeRole(string? role)
+    {
+        var r = (role ?? "user").Trim().ToLowerInvariant();
+        return r is "admin" or "client" or "user" ? r : "user";
     }
 }
 
-public record CreateUserRequest(string Username, string Password, bool IsAdmin = false);
-public record UpdateUserRequest(string? Password, bool IsAdmin, bool IsActive, bool ResetHwid = false);
+public record CreateUserRequest(string Username, string Password, string? Role = null);
+public record UpdateUserRequest(string? Password = null, string? Role = null, bool IsActive = true,
+    int? GrantDays = null, bool SetLifetime = false, bool ClearAccess = false, bool ResetHwid = false);

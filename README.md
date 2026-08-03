@@ -1,78 +1,49 @@
 # FluxVisuals AuthServer
 
-Сервер для клиента FluxVisuals: авторизация + HWID + админка + сайт + раздача лоадера и мода.
-Разворачивается на Render (бесплатно) одной кнопкой из этого репозитория.
+Полноценный сайт FluxVisuals: лендинг с ценами + регистрация + личный кабинет + покупка доступа + админ-панель + раздача клиента. Сервер самодостаточный, деплой на Render одной кнопкой.
 
-## Как задеплоить на Render (2 минуты)
+## Роли
+- **admin** — доступ в админ-панель, управление юзерами и доступом
+- **client** — купил доступ (по сроку или пожизненно), может скачать и запускать клиент
+- **user** — обычный зарегистрированный, без доступа (не скачает и не запустит)
 
-1. **Залить этот код в GitHub** (создать репозиторий):
-   - Сайт github.com → New repository → имя напр. `fluxvisuals-server` → Create
-   - В разделе *«…or push an existing repository»* скопировать команды
-   - Выполнить их в этой папке (открой её в терминале):
-     ```
-     git init
-     git add .
-     git commit -m "init"
-     git remote add origin https://github.com/ТВОЙ_ЛОГИН/fluxvisuals-server.git
-     git push -u origin main
-     ```
+## Как задеплоить на Render
 
-2. **Создать базу данных (обязательно!)** — на бесплатном Render диск эфемерный,
-   без внешней БД все пользователи сотрутся при перезапуске:
-   - render.com → New → **PostgreSQL**
-   - Выбрать Free plan (1 ГБ, бесплатно)
-   - После создания скопировать **Internal Database URL** (строка `postgres://...`)
-
-3. **Подключить Web Service**:
-   - render.com → New → **Web Service**
-   - Connect → выбрать репозиторий `fluxvisuals-server`
-   - Render сам увидит `Dockerfile`
-   - В разделе **Environment** добавить переменную:
-     - Key: `DATABASE_URL`
-     - Value: (вставь Internal Database URL из шага 2)
-   - Нажми **Create Web Service**
-   - Через ~5 минут сервер поднимется
-
-4. **Готово!** Render даст адрес вида:
+1. **Залить в GitHub**: github.com → New repository (`fluxvisuals-server`) → команды из подсказки:
    ```
-   https://fluxvisuals-server.onrender.com
+   git remote add origin https://github.com/ТВОЙ_ЛОГИН/fluxvisuals-server.git
+   git push -u origin main
    ```
-   - Сайт: `https://fluxvisuals-server.onrender.com/`
-   - Админка: `https://fluxvisuals-server.onrender.com/admin/` (логин `admin`, пароль `admin123`)
-   - Этот же адрес клиенты вводят в поле «Сервер» лоадера
+2. **База**: render.com → New → **PostgreSQL** (Free) → скопируй **Internal Database URL**
+3. **Сервис**: render.com → New → **Web Service** → репозиторий → Render найдёт `Dockerfile` → в Environment добавь `DATABASE_URL` = (строка из шага 2) → Create Web Service
+4. Готово, адрес вида `https://fluxvisuals-server.onrender.com`
+   - Сайт: `/` · Логин: `/login.html` · Регистрация: `/register.html`
+   - Кабинет: `/account.html` · Админка: `/admin/` (логин `admin`, пароль `admin123` — смени!)
 
-## ⚠️ Про бесплатный тариф Render
-Бесплатные Web-сервисы **засыпают после 15 минут без запросов** и просыпаются ~30 сек.
-Если клиент при входе получил «таймаут» — это он разбудил сервер, надо нажать вход ещё раз.
-Можно держать сервер «тёплым» бесплатным аптайм-монитором (напр. UptimeRobot, пинг каждые 5 мин).
+## Настройка оплаты (CrystalPay)
 
-## Что внутри
-- `/` — страница скачивания клиента (кнопка ведёт на GitHub Release)
-- `/admin/` — админ-панель (юзеры, логи, статистика, URL мода)
-- `/api/...` — авторизация (JWT + HWID)
+В `appsettings.json` → `Payment`:
+```json
+"Payment": {
+  "Provider": "crystalpay",
+  "CrystalPay": { "MerchantId": "ЛОГИН_КАССЫ", "Secret": "СЕКРЕТ", "Salt": "СОЛЬ" }
+}
+```
+Пока ключи пустые — кнопки покупки показывают «Оплата не настроена». Как только впишешь ключи и задеплоишь — покупка заработает: юзер платит криптой, вебхук сам выдаёт доступ.
 
-## Куда делся лоадер и мод?
-Большие файлы (>50 МБ) **не хранятся в git** — GitHub их режет. Они лежат в **GitHub Releases**
-(там лимит 2 ГБ на файл, бесплатно):
-- **Лоадер** `FluxVisualsLoader.exe` → в релизе репозитория `sours3s/FluxVisuals`
-- **Мод** `fluxvisuals-mod-1.21.11.jar` → там же (уже лежит)
+Тарифы — в `appsettings.json` → `Plans` (название, дни/пожизненно, цена).
 
-### Загрузить файлы в Release (один раз)
-1. github.com → репозиторий `sours3s/FluxVisuals` → **Releases**
-2. Открой релиз `v1.0.0.0` (или создай новый)
-3. Перетащи туда `FluxVisualsLoader.exe` (если ещё нет) → **Update release**
-4. Кнопка «СКАЧАТЬ КЛИЕНТ» на сайте уже ведёт на этот файл
+## Где лежат файлы клиента
 
-### Обновить файлы при новой версии
-1. Залей новый `.exe` / `.jar` в тот же релиз (перетащи поверх)
-2. Сделай `git push` (если менялся код)
-Render пересоберёт сам, база (PostgreSQL) сохранится.
+Большие файлы — в **GitHub Releases** (в git их нет, там лимит):
+- **Лоадер** `FluxVisualsLoader.exe` → релиз `sours3s/FluxVisuals` (`Loader:DownloadUrl` в appsettings)
+- **Мод** `fluxvisuals-mod-1.21.11.jar` → там же (`Mod:DownloadUrl`)
 
-### Поменять ссылку на мод/лоадер
-Ссылки прописаны в:
-- `AuthServer/wwwroot/index.html` — кнопка лоадера
-- `AuthServer/appsettings.json` → `Mod.DownloadUrl` — мод
+Клиент скачивается **с сайта**: сервер стримит файл с GitHub через `/api/download/loader` только авторизованным клиентам с доступом (без редиректа).
 
-## Данные пользователей
-С PostgreSQL (шаг 2) база живёт отдельно от сервиса — **юзеры не теряются при перезапусках**.
-Если используешь сервер без `DATABASE_URL` (например Oracle Cloud) — база лежит в файле `auth.db` рядом с сервером (постоянный диск, бэкап = копия файла).
+## Обновление лоадера/мода
+1. Залей новый `.exe`/`.jar` в GitHub Release (перетащи поверх)
+2. Если менялся код сервера — `git push`, Render пересоберёт сам
+
+## ⚠️ Render Free
+Сервис **засыпает после 15 мин без запросов** (~30 сек на пробуждение). Чтобы держать тёплым — аптайм-монитор (UptimeRobot) пингует каждые 5 мин.

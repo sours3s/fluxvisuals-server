@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Личный кабинет — FluxVisuals</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .status-line { display:flex; align-items:center; gap:10px; margin-top:12px; }
+  .dot { width:10px; height:10px; border-radius:50%; }
+  .dot.on { background:#22c55e; box-shadow:0 0 8px #22c55e; }
+  .dot.off { background:#f85149; box-shadow:0 0 8px #f85149; }
+  .pay-modal { position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:50; }
+  .pay-modal.show { display:flex; }
+  .pay-box { background:#161b22; border:1px solid #30363d; border-radius:18px; padding:34px; max-width:440px; width:90%; text-align:center; }
+  .pay-box .big { font-size:20px; font-weight:800; margin:12px 0 6px; }
+  .pay-box .sub { color:#8b949e; font-size:14px; margin-bottom:20px; }
+  .spinner { width:34px; height:34px; border:3px solid #30363d; border-top-color:#a855f7; border-radius:50%; animation:spin 1s linear infinite; margin: 10px auto; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="bg"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+
+<nav class="nav">
+  <div class="nav-logo"><span class="ic">F</span> FLUX<span style="background:linear-gradient(90deg,#a855f7,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent;">VISUALS</span></div>
+  <div class="nav-links" id="navLinks">
+    <a href="/">Главная</a>
+    <button class="btn btn-ghost" onclick="siteLogout()">Выйти</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="section" style="padding:40px 0 20px;">
+    <h1 class="section-title" style="font-size:26px;">Личный кабинет</h1>
+    <div class="sub" style="color:#8b949e;">Здравствуй, <b id="acctName" style="color:#e6edf3;">…</b></div>
+  </div>
+
+  <div class="acct-grid">
+    <!-- Статус -->
+    <div class="acct-card">
+      <h3>Статус доступа</h3>
+      <div class="row"><span class="k">Роль</span><span class="v"><span id="roleBadge" class="badge">…</span></span></div>
+      <div class="row"><span class="k">Доступ</span><span class="v" id="accessText">…</span></div>
+      <div class="row"><span class="k">Срок до</span><span class="v" id="expiryText">—</span></div>
+      <div class="row"><span class="k">HWID</span><span class="v" id="hwidText">—</span></div>
+      <div class="status-line"><span class="dot" id="statusDot"></span><span id="statusText">…</span></div>
+      <div style="margin-top:18px;">
+        <a class="btn btn-primary btn-block" href="/admin/" id="adminLink" style="display:none;">Открыть админ-панель</a>
+      </div>
+    </div>
+
+    <!-- Клиент -->
+    <div class="acct-card">
+      <h3>Клиент</h3>
+      <div id="downloadSection">
+        <button class="btn btn-primary btn-block btn-lg dl-btn" id="dlBtn" onclick="downloadLoader()">⬇ Скачать клиент</button>
+        <div style="font-size:12.5px;color:#8b949e;margin-top:10px;text-align:center;" id="dlHint">Windows · ~65 МБ</div>
+      </div>
+      <div id="noAccessSection" style="display:none;">
+        <div class="notice"><b>Нет доступа.</b> Купи клиент ниже, чтобы скачать и играть.</div>
+        <div class="mini-plans" id="miniPlans"></div>
+      </div>
+    </div>
+
+    <!-- Покупка -->
+    <div class="acct-card">
+      <h3>Купить / продлить</h3>
+      <div class="plans" id="buyPlans" style="grid-template-columns:1fr;gap:12px;"><div style="color:#8b949e;">Загрузка…</div></div>
+      <div id="payStatus" style="margin-top:14px;"></div>
+    </div>
+
+    <!-- Безопасность -->
+    <div class="acct-card">
+      <h3>Смена пароля</h3>
+      <div class="err" id="pwErr"></div>
+      <div class="ok" id="pwOk"></div>
+      <form id="pwForm">
+        <div class="field"><label>Текущий пароль</label><input type="password" id="curPw" required></div>
+        <div class="field"><label>Новый пароль</label><input type="password" id="newPw" minlength="6" required></div>
+        <button class="btn btn-ghost btn-block" type="submit">Сменить пароль</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Модалка оплаты -->
+<div class="pay-modal" id="payModal">
+  <div class="pay-box">
+    <div class="big">Ожидание оплаты</div>
+    <div class="sub">Оплати счёт и подожди — доступ активируется автоматически. Страница обновится сама.</div>
+    <a class="btn btn-primary btn-block btn-lg" id="payLink" href="#" target="_blank">Перейти к оплате</a>
+    <div class="spinner"></div>
+    <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="closePayModal()">Я уже оплатил</button>
+  </div>
+</div>
+
+<script src="/js/site.js"></script>
+<script>
+  let me = null;
+  let pollTimer = null;
+
+  function roleBadge(role) {
+    if (role === 'admin') return '<span class="badge badge-admin">Админ</span>';
+    if (role === 'client') return '<span class="badge badge-client">Клиент</span>';
+    return '<span class="badge badge-user">Обычный юзер</span>';
+  }
+
+  async function loadAccount() {
+    me = await requireAuth();
+    if (!me) return;
+    document.getElementById('acctName').textContent = me.username;
+    document.getElementById('roleBadge').innerHTML = roleBadge(me.role);
+    document.getElementById('hwidText').textContent = me.hwid ? 'Привязан' : 'Не привязан';
+
+    const on = me.hasAccess;
+    document.getElementById('statusDot').className = 'dot ' + (on ? 'on' : 'off');
+    document.getElementById('statusText').textContent = on ? 'Доступ активен' : 'Доступа нет';
+    document.getElementById('accessText').textContent = me.role === 'client' || me.role === 'admin' ? (on ? 'Активен' : 'Истёк') : 'Нет';
+    document.getElementById('expiryText').textContent = me.accessExpiresAt ? fmtDate(me.accessExpiresAt) : (me.role === 'client' || me.role === 'admin') ? 'Пожизненно' : '—';
+
+    if (me.role === 'admin') document.getElementById('adminLink').style.display = 'block';
+
+    // Секции скачивания / покупки
+    if (on) {
+      document.getElementById('downloadSection').style.display = 'block';
+      document.getElementById('noAccessSection').style.display = 'none';
+    } else {
+      document.getElementById('downloadSection').style.display = 'none';
+      document.getElementById('noAccessSection').style.display = 'block';
+    }
+
+    loadPlans();
+  }
+
+  async function loadPlans() {
+    const { res, data } = await apiJson('/account/plans');
+    if (!res.ok || !data) return;
+
+    document.getElementById('miniPlans').innerHTML = data.map(p => `
+      <div class="mini-plan">
+        <div><div class="p-name">${esc(p.name)}</div><div style="font-size:12px;color:#8b949e;">${p.lifetime ? 'Навсегда' : p.days + ' дней'}</div></div>
+        <button class="btn btn-primary" onclick="buy('${esc(p.id)}')">${p.price} ₽</button>
+      </div>`).join('');
+
+    document.getElementById('buyPlans').innerHTML = data.map(p => `
+      <div class="mini-plan">
+        <div><div class="p-name">${esc(p.name)}</div><div style="font-size:12px;color:#8b949e;">${esc(p.description || '')}</div></div>
+        <button class="btn btn-primary" onclick="buy('${esc(p.id)}')">Купить ${p.price} ₽</button>
+      </div>`).join('');
+  }
+
+  async function buy(planId) {
+    const { res, data } = await apiJson('/payment/create', {
+      method: 'POST',
+      body: JSON.stringify({ planId })
+    });
+    const st = document.getElementById('payStatus');
+    if (!res.ok) {
+      st.innerHTML = '<div class="notice"><b>Оплата недоступна.</b> ' + esc(data?.error || 'Ошибка') + '</div>';
+      return;
+    }
+    document.getElementById('payLink').href = data.payUrl;
+    document.getElementById('payModal').classList.add('show');
+    startPolling(data.orderId);
+  }
+
+  function startPolling(orderId) {
+    clearInterval(pollTimer);
+    pollTimer = setInterval(async () => {
+      const { res, data } = await apiJson('/payment/status/' + orderId);
+      if (res.ok && data.status === 'paid') {
+        clearInterval(pollTimer);
+        closePayModal();
+        location.reload();
+      }
+    }, 3000);
+  }
+
+  function closePayModal() {
+    document.getElementById('payModal').classList.remove('show');
+  }
+
+  async function downloadLoader() {
+    const btn = document.getElementById('dlBtn');
+    btn.disabled = true; btn.textContent = 'Скачивание…';
+    document.getElementById('dlHint').textContent = 'Подготавливаем файл (~65 МБ)…';
+    try {
+      const res = await api('/download/loader');
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        document.getElementById('dlHint').textContent = err?.error || 'Ошибка скачивания';
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'FluxVisualsLoader.exe';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      document.getElementById('dlHint').textContent = 'Готово! Скачано через сайт.';
+    } catch (e) {
+      document.getElementById('dlHint').textContent = 'Ошибка сети. Попробуй ещё раз.';
+    } finally {
+      btn.disabled = false; btn.textContent = '⬇ Скачать клиент';
+    }
+  }
+
+  // Смена пароля
+  document.getElementById('pwForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    document.getElementById('pwErr').style.display = 'none';
+    document.getElementById('pwOk').style.display = 'none';
+    const { res, data } = await apiJson('/account/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword: document.getElementById('curPw').value, newPassword: document.getElementById('newPw').value })
+    });
+    if (res.ok) {
+      document.getElementById('pwOk').textContent = 'Пароль изменён';
+      document.getElementById('pwOk').style.display = 'block';
+      document.getElementById('pwForm').reset();
+    } else {
+      document.getElementById('pwErr').textContent = data?.error || 'Ошибка';
+      document.getElementById('pwErr').style.display = 'block';
+    }
+  });
+
+  loadAccount();
+</script>
+</body>
+</html>

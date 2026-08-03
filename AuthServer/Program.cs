@@ -34,6 +34,11 @@ builder.Services.Configure<JwtSettings>(opt =>
 });
 
 builder.Services.AddSingleton<JwtService>();
+builder.Services.AddHttpClient();
+
+// Платёжный шлюз
+builder.Services.Configure<CrystalPayOptions>(builder.Configuration.GetSection("Payment:CrystalPay"));
+builder.Services.AddSingleton<IPaymentProvider, CrystalPayProvider>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
@@ -81,7 +86,7 @@ using (var scope = app.Services.CreateScope())
         var admin = new AuthServer.Models.User
         {
             Username = "admin",
-            IsAdmin = true,
+            Role = "admin",
             IsActive = true
         };
         admin.SetPassword("admin123"); // Change on first login!

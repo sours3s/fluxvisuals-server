@@ -28,16 +28,23 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    [Authorize(Policy = "admin")]
+    [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] RegisterRequest req)
     {
         if (string.IsNullOrWhiteSpace(req.Username) || string.IsNullOrWhiteSpace(req.Password))
             return BadRequest(new { error = "Username and password required" });
 
+        if (req.Username.Length < 3 || req.Username.Length > 50)
+            return BadRequest(new { error = "Логин от 3 до 50 символов" });
+        if (req.Password.Length < 6)
+            return BadRequest(new { error = "Пароль минимум 6 символов" });
+
         if (await _db.Users.AnyAsync(u => u.Username == req.Username))
             return Conflict(new { error = "Username already exists" });
 
-        var user = new User { Username = req.Username, IsAdmin = req.IsAdmin };
+        // Публичная регистрация всегда создаёт обычного юзера.
+        // Админов/клиентов заводит админ через админ-панель.
+        var user = new User { Username = req.Username, Role = "user" };
         user.SetPassword(req.Password);
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
@@ -81,19 +88,19 @@ public class AuthController : ControllerBase
         user.LastLoginAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
 
-        // Generate token using JwtService (which uses injected settings)
         var token = _jwt.GenerateToken(user);
-
-        // Debug: decode the token to verify role claim
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
-        var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "role");
-        Console.WriteLine($"[DEBUG] Token claims: {string.Join(", ", jwtToken.Claims.Select(c => $"{c.Type}={c.Value}"))}");
-        Console.WriteLine($"[DEBUG] Role claim: {roleClaim?.Value ?? "MISSING"}");
 
         await LogAuth(user.Id, "login", req.IpAddress, req.Hwid, true);
 
-        return Ok(new { token, username = user.Username, isAdmin = user.IsAdmin });
+        return Ok(new
+        {
+            token,
+            username = user.Username,
+            role = user.Role,
+            isAdmin = user.IsAdminRole,
+            hasAccess = user.HasAccess(DateTime.UtcNow),
+            accessExpiresAt = user.AccessExpiresAt
+        });
     }
 
     [HttpGet("verify")]
@@ -108,7 +115,14 @@ public class AuthController : ControllerBase
         if (user == null || !user.IsActive)
             return Unauthorized();
 
-        return Ok(new { username = user.Username, isAdmin = user.IsAdmin });
+        return Ok(new
+        {
+            username = user.Username,
+            role = user.Role,
+            isAdmin = user.IsAdminRole,
+            hasAccess = user.HasAccess(DateTime.UtcNow),
+            accessExpiresAt = user.AccessExpiresAt
+        });
     }
 
     [HttpGet("claims")]

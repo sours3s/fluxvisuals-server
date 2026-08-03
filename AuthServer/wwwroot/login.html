@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вход — FluxVisuals</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="bg"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+
+<nav class="nav">
+  <div class="nav-logo"><span class="ic">F</span> FLUX<span style="background:linear-gradient(90deg,#a855f7,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent;">VISUALS</span></div>
+  <div class="nav-links"><a href="/">На главную</a></div>
+</nav>
+
+<div class="auth-card">
+  <h2>Вход</h2>
+  <div class="sub">Логин и пароль, которые ты указывал в лоадере</div>
+  <div class="err" id="err"></div>
+  <form id="loginForm">
+    <div class="field">
+      <label>Логин</label>
+      <input type="text" id="username" autocomplete="username" required>
+    </div>
+    <div class="field">
+      <label>Пароль</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+    </div>
+    <button class="btn btn-primary btn-block btn-lg" type="submit" id="btn">Войти</button>
+  </form>
+  <div class="form-foot">Нет аккаунта? <a href="/register.html">Зарегистрируйся</a></div>
+</div>
+
+<script src="/js/site.js"></script>
+<script>
+  const errBox = document.getElementById('err');
+  document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    errBox.style.display = 'none';
+    const btn = document.getElementById('btn');
+    btn.disabled = true; btn.textContent = 'Вход…';
+    try {
+      const { res, data } = await apiJson('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ username: document.getElementById('username').value.trim(), password: document.getElementById('password').value })
+      });
+      if (res.ok && data.token) {
+        saveToken(data.token);
+        location.href = '/account.html';
+        return;
+      }
+      errBox.textContent = data?.error || 'Неверный логин или пароль';
+      errBox.style.display = 'block';
+    } catch (err) {
+      errBox.textContent = 'Сервер недоступен. Попробуй ещё раз.';
+      errBox.style.display = 'block';
+    }
+    btn.disabled = false; btn.textContent = 'Войти';
+  });
+</script>
+</body>
+</html>

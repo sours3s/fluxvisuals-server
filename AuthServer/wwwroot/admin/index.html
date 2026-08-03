@@ -37,6 +37,8 @@
         .badge-active { background: #1f6feb22; color: #58a6ff; border: 1px solid #1f6feb44; }
         .badge-inactive { background: #da363322; color: #f85149; border: 1px solid #da363344; }
         .badge-admin { background: #a855f722; color: #d8b4fe; border: 1px solid #a855f744; }
+        .badge-client { background: #22c55e22; color: #4ade80; border: 1px solid #22c55e44; }
+        .text-muted { color: #8b949e; }
         .badge-hwid { background: #d2a10622; color: #e3b341; border: 1px solid #d2a10644; }
         .actions { display: flex; gap: 8px; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
@@ -83,11 +85,14 @@
 
         <div id="tab-dashboard" class="tab-content">
             <div class="stats-grid" id="statsGrid">
-                <div class="stat"><div class="stat-label">Total Users</div><div class="stat-value" id="statTotal">-</div></div>
-                <div class="stat"><div class="stat-label">Active Users</div><div class="stat-value" id="statActive">-</div></div>
-                <div class="stat"><div class="stat-label">Admins</div><div class="stat-value" id="statAdmin">-</div></div>
-                <div class="stat"><div class="stat-label">HWID Locked</div><div class="stat-value" id="statHwid">-</div></div>
-                <div class="stat"><div class="stat-label">Logins (7d)</div><div class="stat-value" id="statLogins">-</div></div>
+                <div class="stat"><div class="stat-label">Всего юзеров</div><div class="stat-value" id="statTotal">-</div></div>
+                <div class="stat"><div class="stat-label">Админов</div><div class="stat-value" id="statAdmins">-</div></div>
+                <div class="stat"><div class="stat-label">Клиентов</div><div class="stat-value" id="statClients">-</div></div>
+                <div class="stat"><div class="stat-label">Обычных юзеров</div><div class="stat-value" id="statUsers">-</div></div>
+                <div class="stat"><div class="stat-label">С доступом</div><div class="stat-value" id="statWithAccess">-</div></div>
+                <div class="stat"><div class="stat-label">Истёкшие</div><div class="stat-value" id="statExpired">-</div></div>
+                <div class="stat"><div class="stat-label">HWID привязки</div><div class="stat-value" id="statHwid">-</div></div>
+                <div class="stat"><div class="stat-label">Входов (7д)</div><div class="stat-value" id="statLogins">-</div></div>
             </div>
         </div>
 
@@ -100,7 +105,7 @@
                 <table id="usersTable">
                     <thead>
                         <tr>
-                            <th>ID</th><th>Username</th><th>Role</th><th>Status</th><th>HWID</th><th>Last Login</th><th>Actions</th>
+                            <th>ID</th><th>Username</th><th>Role</th><th>Доступ</th><th>Статус</th><th>HWID</th><th>Last Login</th><th>Actions</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -141,11 +146,22 @@
                         <input type="password" id="passwordInput" placeholder="Leave empty to keep current">
                     </div>
                     <div class="form-group">
-                        <label>Role</label>
+                        <label>Роль</label>
                         <select id="roleSelect">
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
+                            <option value="user">Обычный юзер</option>
+                            <option value="client">Клиент (купил)</option>
+                            <option value="admin">Админ</option>
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Выдать доступ</label>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <input type="number" id="grantDaysInput" min="1" max="3650" placeholder="Дней" style="width:90px; padding:8px;">
+                            <button type="button" class="btn btn-primary" onclick="grantDays()" style="padding:8px 12px;">Добавить дни</button>
+                            <button type="button" class="btn btn-secondary" onclick="setLifetime()" style="padding:8px 12px;">Пожизненно</button>
+                            <button type="button" class="btn btn-danger" onclick="clearAccess()" style="padding:8px 12px;">Снять доступ</button>
+                        </div>
+                        <div style="font-size:0.8rem; color:#8b949e; margin-top:6px;" id="accessInfo">Нет доступа</div>
                     </div>
                     <div class="form-group">
                         <label>
@@ -253,12 +269,15 @@
             if (!res) return;
             const data = await res.json();
             document.getElementById('statTotal').textContent = data.totalUsers;
-            document.getElementById('statActive').textContent = data.activeUsers;
-            document.getElementById('statAdmin').textContent = data.adminUsers;
+            document.getElementById('statAdmins').textContent = data.admins;
+            document.getElementById('statClients').textContent = data.clients;
+            document.getElementById('statUsers').textContent = data.users;
+            document.getElementById('statWithAccess').textContent = data.clientsWithAccess;
+            document.getElementById('statExpired').textContent = data.expiredClients;
             document.getElementById('statHwid').textContent = data.hwidLocked;
             document.getElementById('statLogins').textContent = data.recentLogins;
 
-            if (data.adminUsers === 0) {
+            if (data.admins === 0) {
                 document.getElementById('tab-users').style.display = 'none';
                 document.querySelector('[data-tab="users"]').style.display = 'none';
                 document.querySelector('[data-tab="logs"]').style.display = 'none';
@@ -276,43 +295,99 @@
             if (!res) return;
             const users = await res.json();
             const tbody = document.querySelector('#usersTable tbody');
-            tbody.innerHTML = users.map(u => `
+            tbody.innerHTML = users.map(u => {
+                const roleBadge = u.role === 'admin' ? '<span class="badge badge-admin">Админ</span>'
+                    : u.role === 'client' ? '<span class="badge badge-client">Клиент</span>'
+                    : '<span class="badge">Юзер</span>';
+                const access = u.role === 'client'
+                    ? (u.accessExpiresAt ? 'до ' + new Date(u.accessExpiresAt).toLocaleDateString() : '♾ Пожизненно')
+                    : '—';
+                return `
                 <tr>
                     <td>${u.id}</td>
                     <td>${u.username}</td>
-                    <td><span class="badge ${u.isAdmin ? 'badge-admin' : ''}">${u.isAdmin ? 'Admin' : 'User'}</span></td>
+                    <td>${roleBadge}</td>
+                    <td><span class="${u.hasAccess ? '' : 'text-muted'}">${access}${u.hasAccess ? '' : u.role === 'client' ? ' (истёк)' : ''}</span></td>
                     <td><span class="badge ${u.isActive ? 'badge-active' : 'badge-inactive'}">${u.isActive ? 'Active' : 'Disabled'}</span></td>
                     <td><span class="badge ${u.hwid ? 'badge-hwid' : ''}">${u.hwid ? 'Locked' : 'Not bound'}</span></td>
                     <td>${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Never'}</td>
                     <td>
                         <div class="actions">
-                            <button class="btn btn-secondary" style="padding:6px 10px;font-size:0.8rem;" onclick="editUser(${u.id}, '${u.username}', ${u.isAdmin}, ${u.isActive}, '${u.hwid || ''}')">Edit</button>
+                            <button class="btn btn-secondary" style="padding:6px 10px;font-size:0.8rem;" onclick="editUser(${u.id}, '${u.username}', '${u.role}', ${u.isActive}, ${u.hasAccess}, '${(u.accessExpiresAt ? u.accessExpiresAt : '')}', '${u.hwid || ''}')">Edit</button>
                             <button class="btn btn-danger" style="padding:6px 10px;font-size:0.8rem;" onclick="deleteUser(${u.id}, '${u.username}')">Delete</button>
                         </div>
                     </td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
         }
+
+        let editingUser = null;
 
         function openUserModal(user = null) {
             document.getElementById('userForm').reset();
             document.getElementById('userId').value = '';
             document.getElementById('passwordInput').required = !user;
-            document.getElementById('modalTitle').textContent = user ? 'Edit User' : 'Add User';
+            document.getElementById('modalTitle').textContent = user ? 'Изменить юзера' : 'Новый юзер';
+            editingUser = user;
             if (user) {
                 document.getElementById('userId').value = user.id;
                 document.getElementById('usernameInput').value = user.username;
-                document.getElementById('roleSelect').value = user.isAdmin ? 'admin' : 'user';
+                document.getElementById('roleSelect').value = user.role || (user.isAdmin ? 'admin' : 'user');
                 document.getElementById('isActiveCheck').checked = user.isActive;
-                document.getElementById('passwordInput').placeholder = 'Leave empty to keep current';
+                document.getElementById('passwordInput').placeholder = 'Оставь пустым — не менять';
+                updateAccessInfo(user);
             } else {
-                document.getElementById('passwordInput').placeholder = 'Required for new user';
+                document.getElementById('roleSelect').value = 'user';
+                document.getElementById('accessInfo').textContent = '—';
+                document.getElementById('passwordInput').placeholder = 'Пароль нового юзера';
             }
             document.getElementById('userModal').classList.add('show');
         }
 
+        function updateAccessInfo(u) {
+            const info = document.getElementById('accessInfo');
+            if (u.role !== 'client') { info.textContent = 'Нет доступа'; return; }
+            info.textContent = u.accessExpiresAt
+                ? 'Доступ до ' + new Date(u.accessExpiresAt).toLocaleString()
+                : 'Пожизненный доступ (♾)';
+        }
+
         function closeUserModal() {
             document.getElementById('userModal').classList.remove('show');
+        }
+
+        async function grantDays() {
+            const days = parseInt(document.getElementById('grantDaysInput').value);
+            const id = document.getElementById('userId').value;
+            if (!id) { alert('Сначала выбери юзера'); return; }
+            if (!days || days <= 0) { alert('Введи количество дней'); return; }
+            await accessAction({ grantDays: days });
+        }
+        async function setLifetime() {
+            const id = document.getElementById('userId').value;
+            if (!id) { alert('Сначала выбери юзера'); return; }
+            await accessAction({ setLifetime: true });
+        }
+        async function clearAccess() {
+            const id = document.getElementById('userId').value;
+            if (!id) { alert('Сначала выбери юзера'); return; }
+            if (!confirm('Снять доступ у клиента (роль станет «юзер»)?')) return;
+            await accessAction({ clearAccess: true });
+        }
+        async function accessAction(patch) {
+            const id = document.getElementById('userId').value;
+            const res = await api('/admin/users/' + id, { method: 'PUT', body: JSON.stringify({ ...patch, isActive: true }) });
+            if (res && res.ok) {
+                const data = await res.json();
+                showToast('Доступ обновлён');
+                editingUser = { ...editingUser, role: data.role, accessExpiresAt: data.accessExpiresAt };
+                document.getElementById('roleSelect').value = data.role;
+                updateAccessInfo(editingUser);
+                loadUsers();
+            } else {
+                const err = await res?.json();
+                showToast(err?.error || 'Ошибка', 'error');
+            }
         }
 
         document.getElementById('userForm').addEventListener('submit', async e => {
@@ -321,28 +396,28 @@
             const data = {
                 username: document.getElementById('usernameInput').value,
                 password: document.getElementById('passwordInput').value,
-                isAdmin: document.getElementById('roleSelect').value === 'admin',
+                role: document.getElementById('roleSelect').value,
                 isActive: document.getElementById('isActiveCheck').checked,
                 resetHwid: document.getElementById('resetHwidCheck').checked
             };
-            if (!data.password && !id) { alert('Password required for new user'); return; }
+            if (!data.password && !id) { alert('Пароль обязателен для нового юзера'); return; }
 
             const res = await api(id ? `/admin/users/${id}` : '/admin/users', {
                 method: id ? 'PUT' : 'POST',
                 body: JSON.stringify(data)
             });
             if (res && res.ok) {
-                showToast(id ? 'User updated' : 'User created');
+                showToast(id ? 'Юзер обновлён' : 'Юзер создан');
                 closeUserModal();
                 loadUsers();
             } else {
                 const err = await res?.json();
-                showToast(err?.error || 'Failed', 'error');
+                showToast(err?.error || 'Ошибка', 'error');
             }
         });
 
-        async function editUser(id, username, isAdmin, isActive, hwid) {
-            openUserModal({ id, username, isAdmin, isActive, hwid });
+        async function editUser(id, username, role, isActive, hasAccess, accessExpiresAt, hwid) {
+            openUserModal({ id, username, role, isActive, accessExpiresAt, hwid });
         }
 
         async function deleteUser(id, username) {
