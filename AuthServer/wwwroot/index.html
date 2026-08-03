@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FluxVisuals — скачать клиент</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0d1117; color: #e6edf3; min-height: 100vh; overflow-x: hidden;
+  }
+  .bg { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse at 20% 0%, #1a1035 0%, #0d1117 60%), radial-gradient(ellipse at 90% 100%, #2d0a2e 0%, #0d1117 55%); }
+  .blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .35; }
+  .blob-1 { width: 480px; height: 480px; background: #a855f7; top: -120px; right: 10%; }
+  .blob-2 { width: 380px; height: 380px; background: #ec4899; bottom: -80px; left: 5%; }
+  .grid-overlay { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px); background-size: 44px 44px; }
+
+  .wrap { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 60px 24px 80px; }
+
+  .logo-row { display: flex; align-items: center; gap: 12px; justify-content: center; margin-bottom: 40px; }
+  .logo { width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(135deg, #a855f7, #ec4899); display: grid; place-items: center; font-weight: 800; font-size: 22px; color: #fff; box-shadow: 0 8px 24px rgba(168,85,247,.5); }
+  .logo-row span { font-size: 20px; font-weight: 800; letter-spacing: 2px; }
+
+  .hero { text-align: center; margin-bottom: 48px; }
+  .kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; letter-spacing: 2px; color: #a855f7; text-transform: uppercase; margin-bottom: 16px; }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+  h1 { font-size: 52px; font-weight: 900; letter-spacing: 1px; line-height: 1.1; }
+  .grad { background: linear-gradient(90deg, #a855f7, #ec4899); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p { color: #8b949e; margin: 14px auto 0; max-width: 520px; font-size: 16px; line-height: 1.6; }
+
+  .download { text-align: center; margin: 36px 0 16px; }
+  .btn-dl {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 18px 44px; border-radius: 16px; border: none; cursor: pointer;
+    font-family: inherit; font-size: 18px; font-weight: 800; letter-spacing: 1.5px; color: #fff;
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    box-shadow: 0 12px 40px rgba(168,85,247,.45);
+    text-decoration: none; transition: transform .15s, filter .2s;
+  }
+  .btn-dl:hover { filter: brightness(1.12); transform: translateY(-2px); }
+  .btn-dl svg { width: 22px; height: 22px; }
+  .dl-info { font-size: 13px; color: #8b949e; margin-top: 12px; }
+
+  .status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; padding: 8px 16px; border-radius: 999px; background: rgba(255,255,255,.05); border: 1px solid #30363d; margin-top: 20px; }
+  .status .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .status.online .dot { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+  .status.offline .dot { background: #f85149; box-shadow: 0 0 8px #f85149; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 56px; }
+  .card { background: rgba(22,27,34,.8); border: 1px solid #30363d; border-radius: 14px; padding: 22px; }
+  .card .num { font-size: 13px; font-weight: 800; color: #a855f7; letter-spacing: 1px; }
+  .card h3 { margin: 8px 0 6px; font-size: 16px; }
+  .card p { color: #8b949e; font-size: 13.5px; line-height: 1.55; }
+
+  .faq { margin-top: 48px; }
+  .faq h2 { font-size: 20px; margin-bottom: 16px; }
+  .faq-item { background: rgba(22,27,34,.6); border: 1px solid #30363d; border-radius: 12px; padding: 16px 20px; margin-bottom: 10px; }
+  .faq-item b { display: block; margin-bottom: 4px; font-size: 14.5px; }
+  .faq-item span { color: #8b949e; font-size: 13.5px; line-height: 1.55; }
+
+  footer { margin-top: 64px; text-align: center; color: #484f58; font-size: 12.5px; }
+
+  @media (max-width: 700px) {
+    h1 { font-size: 36px; }
+    .steps { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="bg">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="grid-overlay"></div>
+</div>
+
+<div class="wrap">
+  <div class="logo-row">
+    <div class="logo">F</div>
+    <span>FLUXVISUALS</span>
+  </div>
+
+  <div class="hero">
+    <div class="kicker"><span class="pulse"></span> Современный визуальный клиент</div>
+    <h1>FLUX<span class="grad">VISUALS</span></h1>
+    <p>Скачай клиент для Minecraft 1.21.11, войди в аккаунт и играй. Чистая отрисовка без вмешательства в игру.</p>
+
+    <div class="download">
+      <a class="btn-dl" href="/loader/FluxVisualsLoader.exe" download>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 3h2v10.2l3.6-3.6 1.4 1.4L12 17l-6-6 1.4-1.4L11 13.2z"/><path d="M5 19h14v2H5z"/></svg>
+        СКАЧАТЬ КЛИЕНТ
+      </a>
+      <div class="dl-info">Windows · ~65 МБ · вход по аккаунту</div>
+    </div>
+
+    <div class="status offline" id="status"><span class="dot"></span><span id="statusText">Проверка сервера…</span></div>
+  </div>
+
+  <div class="steps">
+    <div class="card">
+      <div class="num">ШАГ 1</div>
+      <h3>Скачай клиент</h3>
+      <p>Нажми кнопку выше — скачается файл FluxVisualsLoader.exe. Запусти его.</p>
+    </div>
+    <div class="card">
+      <div class="num">ШАГ 2</div>
+      <h3>Войди в аккаунт</h3>
+      <p>Логин и пароль выдаёт администратор. Вход привязывается к твоему компьютеру (HWID).</p>
+    </div>
+    <div class="card">
+      <div class="num">ШАГ 3</div>
+      <h3>Играй</h3>
+      <p>Клиент сам скачает мод и библиотеки. Нажми «Играть» — Minecraft запустится.</p>
+    </div>
+  </div>
+
+  <div class="faq">
+    <h2>Частые вопросы</h2>
+    <div class="faq-item"><b>Не получается войти?</b><span>Проверь, что логин и пароль введены верно. Аккаунт привязан к одному компьютеру — вход с другого ПК будет отклонён.</span></div>
+    <div class="faq-item"><b>Долго качает мод?</b><span>Первый запуск занимает время: скачивается мод и библиотеки (~200 МБ). Дальше запуск быстрый.</span></div>
+    <div class="faq-item"><b>Это безопасно?</b><span>Клиент только рисует поверх игры, не отправляет и не меняет игровые пакеты — бана за использование нет.</span></div>
+  </div>
+
+  <footer>FluxVisuals · Minecraft 1.21.11 · Fabric</footer>
+</div>
+
+<script>
+  fetch('/api/mod/version').then(r => {
+    const st = document.getElementById('status');
+    if (r.ok) { st.classList.remove('offline'); st.classList.add('online'); document.getElementById('statusText').textContent = 'Сервер онлайн · клиент готов к скачиванию'; }
+    else document.getElementById('statusText').textContent = 'Сервер временно недоступен';
+  }).catch(() => {
+    document.getElementById('statusText').textContent = 'Сервер временно недоступен';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# FluxVisuals AuthServer — собирается прямо на Render (образ сборки → образ запуска)
+# Не нужно ничего публиковать заранее: Render сам выполнит dotnet publish.
+
+# --- Стадия сборки: SDK ---
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY AuthServer/ ./AuthServer/
+RUN dotnet publish AuthServer/AuthServer.csproj -c Release -o /app
+
+# --- Стадия запуска: лёгкий runtime ---
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+COPY --from=build /app ./
+EXPOSE 5001
+
+# Render задаёт PORT (обычно 10000) — подхватываем; иначе 5001.
+CMD ["sh", "-c", "dotnet AuthServer.dll --urls http://0.0.0.0:${PORT:-5001}"]

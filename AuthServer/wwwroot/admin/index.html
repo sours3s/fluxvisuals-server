@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FluxVisuals Admin Panel</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; }
+        .sidebar { width: 260px; background: #161b22; border-right: 1px solid #30363d; height: 100vh; position: fixed; left: 0; top: 0; padding: 20px; display: flex; flex-direction: column; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: #a855f7; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+        .nav { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .nav a { color: #8b949e; text-decoration: none; padding: 12px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
+        .nav a:hover, .nav a.active { background: #21262d; color: #e6edf3; }
+        .main { margin-left: 260px; padding: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 1.75rem; font-weight: 600; }
+        .user-info { display: flex; align-items: center; gap: 15px; color: #8b949e; }
+        .btn { padding: 10px 20px; border-radius: 6px; border: none; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: #a855f7; color: white; }
+        .btn-primary:hover { background: #9333ea; }
+        .btn-danger { background: #da3633; color: white; }
+        .btn-danger:hover { background: #f85149; }
+        .btn-secondary { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
+        .btn-secondary:hover { background: #30363d; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+        .card h2 { font-size: 1.25rem; margin-bottom: 20px; color: #e6edf3; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+        .stat { background: #21262d; border: 1px solid #30363d; border-radius: 8px; padding: 20px; }
+        .stat-label { color: #8b949e; font-size: 0.875rem; margin-bottom: 8px; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #a855f7; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #30363d; }
+        th { color: #8b949e; font-weight: 500; font-size: 0.875rem; text-transform: uppercase; }
+        tr:hover td { background: #21262d; }
+        .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .badge-active { background: #1f6feb22; color: #58a6ff; border: 1px solid #1f6feb44; }
+        .badge-inactive { background: #da363322; color: #f85149; border: 1px solid #da363344; }
+        .badge-admin { background: #a855f722; color: #d8b4fe; border: 1px solid #a855f744; }
+        .badge-hwid { background: #d2a10622; color: #e3b341; border: 1px solid #d2a10644; }
+        .actions { display: flex; gap: 8px; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; width: 100%; max-width: 400px; }
+        .modal h3 { margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; color: #8b949e; font-size: 0.875rem; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #e6edf3; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #a855f7; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+        .empty { text-align: center; color: #8b949e; padding: 40px; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
+        .tab { padding: 10px 16px; background: none; border: none; color: #8b949e; cursor: pointer; border-radius: 6px; font-weight: 500; }
+        .tab.active, .tab:hover { color: #e6edf3; background: #21262d; }
+        .log-entry { font-family: monospace; font-size: 0.8rem; color: #8b949e; padding: 8px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; margin-bottom: 8px; }
+        .log-entry.success { border-color: #1f6feb44; color: #58a6ff; }
+        .log-entry.fail { border-color: #da363344; color: #f85149; }
+        .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 20px; border-radius: 8px; background: #161b22; border: 1px solid #30363d; z-index: 200; display: none; align-items: center; gap: 10px; }
+        .toast.show { display: flex; }
+        .toast.success { border-color: #1f6feb; }
+        .toast.error { border-color: #da3633; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo">🔮 FluxVisuals Admin</div>
+        <nav class="nav">
+            <a href="#" class="active" data-tab="dashboard"><span>📊</span> Dashboard</a>
+            <a href="#" data-tab="users"><span>👥</span> Users</a>
+            <a href="#" data-tab="logs"><span>📋</span> Auth Logs</a>
+            <a href="#" data-tab="settings"><span>⚙️</span> Settings</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <header class="header">
+            <h1 id="pageTitle">Dashboard</h1>
+            <div class="user-info">
+                <span id="currentUser">Loading...</span>
+                <button class="btn btn-secondary" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <div id="tab-dashboard" class="tab-content">
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat"><div class="stat-label">Total Users</div><div class="stat-value" id="statTotal">-</div></div>
+                <div class="stat"><div class="stat-label">Active Users</div><div class="stat-value" id="statActive">-</div></div>
+                <div class="stat"><div class="stat-label">Admins</div><div class="stat-value" id="statAdmin">-</div></div>
+                <div class="stat"><div class="stat-label">HWID Locked</div><div class="stat-value" id="statHwid">-</div></div>
+                <div class="stat"><div class="stat-label">Logins (7d)</div><div class="stat-value" id="statLogins">-</div></div>
+            </div>
+        </div>
+
+        <div id="tab-users" class="tab-content" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>User Management</h2>
+                <button class="btn btn-primary" onclick="openUserModal()">+ Add User</button>
+            </div>
+            <div class="card">
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>Username</th><th>Role</th><th>Status</th><th>HWID</th><th>Last Login</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-logs" class="tab-content" style="display:none;">
+            <h2>Authentication Logs</h2>
+            <div class="card">
+                <div id="logsContainer"></div>
+            </div>
+        </div>
+
+        <div id="tab-settings" class="tab-content" style="display:none;">
+            <h2>Server Settings</h2>
+            <div class="card">
+                <div class="form-group">
+                    <label>Mod Download URL</label>
+                    <input type="text" id="modUrlInput" placeholder="https://..." style="width:100%;">
+                </div>
+                <button class="btn btn-primary" onclick="saveModUrl()">Save Mod URL</button>
+            </div>
+        </div>
+
+        <!-- User Modal -->
+        <div class="modal" id="userModal">
+            <div class="modal-content">
+                <h3 id="modalTitle">Add User</h3>
+                <form id="userForm">
+                    <input type="hidden" id="userId">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="usernameInput" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="passwordInput" placeholder="Leave empty to keep current">
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="roleSelect">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="isActiveCheck"> Active
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="resetHwidCheck"> Reset HWID
+                        </label>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+    </main>
+
+    <script>
+        let authToken = '';
+        const API_BASE = '/api';
+
+        // Tab switching
+        document.querySelectorAll('.nav a').forEach(a => {
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                document.querySelectorAll('.nav a').forEach(x => x.classList.remove('active'));
+                a.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(x => x.style.display = 'none');
+                document.getElementById('tab-' + a.dataset.tab).style.display = 'block';
+                document.getElementById('pageTitle').textContent = a.textContent.trim();
+            });
+        });
+
+        // Toast
+        function showToast(message, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = message;
+            t.className = 'toast show ' + type;
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // Auth
+        async function api(path, options = {}) {
+            const headers = { 'Content-Type': 'application/json', ...options.headers };
+            if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
+            const res = await fetch(API_BASE + path, { ...options, headers });
+            if (res.status === 401) { logout(); return null; }
+            return res;
+        }
+
+        async function checkAuth() {
+            const token = localStorage.getItem('authToken');
+            if (!token) { showLogin(); return; }
+            authToken = token;
+            const res = await api('/auth/verify');
+            if (res && res.ok) {
+                const data = await res.json();
+                document.getElementById('currentUser').textContent = data.username + (data.isAdmin ? ' (Admin)' : '');
+                loadDashboard();
+            } else {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            const user = prompt('Enter username:');
+            const pass = prompt('Enter password:');
+            if (!user || !pass) { showLogin(); return; }
+            login(user, pass);
+        }
+
+        async function login(username, password) {
+            const res = await fetch(API_BASE + '/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                authToken = data.token;
+                localStorage.setItem('authToken', authToken);
+                document.getElementById('currentUser').textContent = data.username + (data.isAdmin ? ' (Admin)' : '');
+                loadDashboard();
+            } else {
+                const err = await res.json();
+                alert('Login failed: ' + (err.error || 'Unknown error'));
+                showLogin();
+            }
+        }
+
+        function logout() {
+            authToken = '';
+            localStorage.removeItem('authToken');
+            showLogin();
+        }
+
+        // Dashboard
+        async function loadDashboard() {
+            const res = await api('/admin/stats');
+            if (!res) return;
+            const data = await res.json();
+            document.getElementById('statTotal').textContent = data.totalUsers;
+            document.getElementById('statActive').textContent = data.activeUsers;
+            document.getElementById('statAdmin').textContent = data.adminUsers;
+            document.getElementById('statHwid').textContent = data.hwidLocked;
+            document.getElementById('statLogins').textContent = data.recentLogins;
+
+            if (data.adminUsers === 0) {
+                document.getElementById('tab-users').style.display = 'none';
+                document.querySelector('[data-tab="users"]').style.display = 'none';
+                document.querySelector('[data-tab="logs"]').style.display = 'none';
+                document.querySelector('[data-tab="settings"]').style.display = 'none';
+            } else {
+                loadUsers();
+                loadLogs();
+                loadModUrl();
+            }
+        }
+
+        // Users
+        async function loadUsers() {
+            const res = await api('/admin/users');
+            if (!res) return;
+            const users = await res.json();
+            const tbody = document.querySelector('#usersTable tbody');
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td>${u.id}</td>
+                    <td>${u.username}</td>
+                    <td><span class="badge ${u.isAdmin ? 'badge-admin' : ''}">${u.isAdmin ? 'Admin' : 'User'}</span></td>
+                    <td><span class="badge ${u.isActive ? 'badge-active' : 'badge-inactive'}">${u.isActive ? 'Active' : 'Disabled'}</span></td>
+                    <td><span class="badge ${u.hwid ? 'badge-hwid' : ''}">${u.hwid ? 'Locked' : 'Not bound'}</span></td>
+                    <td>${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Never'}</td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn btn-secondary" style="padding:6px 10px;font-size:0.8rem;" onclick="editUser(${u.id}, '${u.username}', ${u.isAdmin}, ${u.isActive}, '${u.hwid || ''}')">Edit</button>
+                            <button class="btn btn-danger" style="padding:6px 10px;font-size:0.8rem;" onclick="deleteUser(${u.id}, '${u.username}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openUserModal(user = null) {
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('passwordInput').required = !user;
+            document.getElementById('modalTitle').textContent = user ? 'Edit User' : 'Add User';
+            if (user) {
+                document.getElementById('userId').value = user.id;
+                document.getElementById('usernameInput').value = user.username;
+                document.getElementById('roleSelect').value = user.isAdmin ? 'admin' : 'user';
+                document.getElementById('isActiveCheck').checked = user.isActive;
+                document.getElementById('passwordInput').placeholder = 'Leave empty to keep current';
+            } else {
+                document.getElementById('passwordInput').placeholder = 'Required for new user';
+            }
+            document.getElementById('userModal').classList.add('show');
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.remove('show');
+        }
+
+        document.getElementById('userForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            const id = document.getElementById('userId').value;
+            const data = {
+                username: document.getElementById('usernameInput').value,
+                password: document.getElementById('passwordInput').value,
+                isAdmin: document.getElementById('roleSelect').value === 'admin',
+                isActive: document.getElementById('isActiveCheck').checked,
+                resetHwid: document.getElementById('resetHwidCheck').checked
+            };
+            if (!data.password && !id) { alert('Password required for new user'); return; }
+
+            const res = await api(id ? `/admin/users/${id}` : '/admin/users', {
+                method: id ? 'PUT' : 'POST',
+                body: JSON.stringify(data)
+            });
+            if (res && res.ok) {
+                showToast(id ? 'User updated' : 'User created');
+                closeUserModal();
+                loadUsers();
+            } else {
+                const err = await res?.json();
+                showToast(err?.error || 'Failed', 'error');
+            }
+        });
+
+        async function editUser(id, username, isAdmin, isActive, hwid) {
+            openUserModal({ id, username, isAdmin, isActive, hwid });
+        }
+
+        async function deleteUser(id, username) {
+            if (!confirm(`Delete user "${username}"?`)) return;
+            const res = await api('/admin/users/' + id, { method: 'DELETE' });
+            if (res && res.ok) {
+                showToast('User deleted');
+                loadUsers();
+            } else {
+                showToast('Failed to delete', 'error');
+            }
+        }
+
+        // Logs
+        async function loadLogs() {
+            const res = await api('/admin/logs?limit=100');
+            if (!res) return;
+            const logs = await res.json();
+            document.getElementById('logsContainer').innerHTML = logs.map(l => `
+                <div class="log-entry ${l.success ? 'success' : 'fail'}">
+                    [${new Date(l.createdAt).toLocaleString()}] ${l.username || 'Unknown'} - ${l.action} - ${l.ipAddress || ''} ${l.hwid ? '- HWID: ' + l.hwid : ''} - ${l.success ? 'OK' : 'FAILED'}
+                </div>
+            `).join('');
+        }
+
+        // Settings
+        async function loadModUrl() {
+            const res = await api('/mod/version');
+            if (res) {
+                const data = await res.json();
+                document.getElementById('modUrlInput').value = data.downloadUrl;
+            }
+        }
+
+        async function saveModUrl() {
+            const url = document.getElementById('modUrlInput').value;
+            const res = await api('/mod/version', {
+                method: 'POST',
+                body: JSON.stringify({ downloadUrl: url })
+            });
+            if (res && res.ok) showToast('Mod URL updated');
+            else showToast('Failed', 'error');
+        }
+
+        // Init
+        checkAuth();
+    </script>
+</body>
+</html>

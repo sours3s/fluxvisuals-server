@@ -1,0 +1,100 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using BCrypt.Net;
+
+namespace AuthServer.Models;
+
+public class User
+{
+    [Key]
+    public int Id { get; set; }
+
+    [Required]
+    [MaxLength(50)]
+    public string Username { get; set; } = "";
+
+    [Required]
+    [MaxLength(255)]
+    public string PasswordHash { get; set; } = "";
+
+    [MaxLength(500)]
+    public string? Hwid { get; set; }
+
+    public bool IsAdmin { get; set; } = false;
+
+    public bool IsActive { get; set; } = true;
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public DateTime? LastLoginAt { get; set; }
+
+    public DateTime? HwidLockedAt { get; set; }
+
+    public void SetPassword(string password)
+    {
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword(password, BCrypt.Net.BCrypt.GenerateSalt(12));
+    }
+
+    public bool VerifyPassword(string password)
+    {
+        return BCrypt.Net.BCrypt.Verify(password, PasswordHash);
+    }
+
+    public void LockHwid(string hwid)
+    {
+        Hwid = hwid;
+        HwidLockedAt = DateTime.UtcNow;
+    }
+
+    public bool CheckHwid(string hwid)
+    {
+        if (string.IsNullOrEmpty(Hwid)) return true; // First login - auto-bind
+        return Hwid == hwid;
+    }
+}
+
+public class AuthLog
+{
+    [Key]
+    public int Id { get; set; }
+
+    // nullable: для неудачных попыток с неизвестным юзером (null вместо несуществующего Id=0)
+    public int? UserId { get; set; }
+
+    [ForeignKey("UserId")]
+    public User? User { get; set; }
+
+    public string Action { get; set; } = ""; // login, register, hwid_mismatch, banned
+
+    public string? IpAddress { get; set; }
+
+    public string? Hwid { get; set; }
+
+    public bool Success { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class AppSettings
+{
+    [Key]
+    public int Id { get; set; } = 1;
+
+    [Required]
+    [MaxLength(500)]
+    public string JwtSecret { get; set; } = "";
+
+    [Required]
+    [MaxLength(50)]
+    public string JwtIssuer { get; set; } = "FluxVisualsAuth";
+
+    [Required]
+    [MaxLength(50)]
+    public string JwtAudience { get; set; } = "FluxVisualsLoader";
+
+    public int JwtExpiryHours { get; set; } = 24;
+
+    public string ModDownloadUrl { get; set; } = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.0.0/fluxvisuals-mod-1.21.11.jar";
+}

@@ -1,0 +1,20 @@
+using Microsoft.EntityFrameworkCore;
+using AuthServer.Models;
+
+namespace AuthServer.Data;
+
+public class AuthDbContext : DbContext
+{
+    public DbSet<User> Users => Set<User>();
+    public DbSet<AuthLog> AuthLogs => Set<AuthLog>();
+    public DbSet<AppSettings> AppSettings => Set<AppSettings>();
+
+    public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options) { }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
+        modelBuilder.Entity<AppSettings>().HasData(new AppSettings { Id = 1 });
+        base.OnModelCreating(modelBuilder);
+    }
+}
