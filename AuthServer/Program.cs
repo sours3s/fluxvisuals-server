@@ -97,6 +97,30 @@ using (var scope = app.Services.CreateScope())
     db.Database.ExecuteSqlRaw("UPDATE \"Users\" SET \"Uid\" = \"Id\" WHERE \"Uid\" IS NULL");
     db.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS \"IX_Users_Uid\" ON \"Users\"(\"Uid\")");
 
+    // Миграция: таблица LaunchTickets. EnsureCreated НЕ создаёт новые таблицы в существующей БД
+    // (на проде её не было — из-за этого и reindex, и выдача тикетов падали с 42P01).
+    if (db.Database.GetDbConnection() is Npgsql.NpgsqlConnection)
+    {
+        db.Database.ExecuteSqlRaw(
+            "CREATE TABLE IF NOT EXISTS \"LaunchTickets\" (" +
+            "\"Jti\" text NOT NULL CONSTRAINT \"PK_LaunchTickets\" PRIMARY KEY, " +
+            "\"UserId\" integer NOT NULL, " +
+            "\"ChallengeHash\" text NOT NULL, " +
+            "\"ExpiresAt\" timestamp with time zone NOT NULL, " +
+            "\"UsedAt\" timestamp with time zone NULL, " +
+            "CONSTRAINT \"FK_LaunchTickets_Users_UserId\" FOREIGN KEY (\"UserId\") REFERENCES \"Users\"(\"Id\") ON DELETE CASCADE)");
+    }
+    else
+    {
+        db.Database.ExecuteSqlRaw(
+            "CREATE TABLE IF NOT EXISTS \"LaunchTickets\" (" +
+            "\"Jti\" TEXT NOT NULL CONSTRAINT \"PK_LaunchTickets\" PRIMARY KEY, " +
+            "\"UserId\" INTEGER NOT NULL, " +
+            "\"ChallengeHash\" TEXT NOT NULL, " +
+            "\"ExpiresAt\" TEXT NOT NULL, " +
+            "\"UsedAt\" TEXT NULL)");
+    }
+
     if (!await db.Users.AnyAsync())
     {
         var admin = new AuthServer.Models.User
