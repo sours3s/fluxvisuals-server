@@ -220,7 +220,7 @@ public class AdminController : ControllerBase
                 using (var q = conn.CreateCommand())
                 {
                     q.Transaction = tx.GetDbTransaction();
-                    q.CommandText = "SELECT tc.table_name, tc.constraint_name, pg_get_constraintdef(c.oid) " +
+                    q.CommandText = "SELECT rel.relname, c.conname, pg_get_constraintdef(c.oid) " +
                         "FROM pg_constraint c " +
                         "JOIN pg_class rel ON rel.oid = c.conrelid " +
                         "JOIN pg_class ref ON ref.oid = c.confrelid " +
@@ -295,10 +295,10 @@ public class AdminController : ControllerBase
 
             await tx.CommitAsync();
         }
-        catch
+        catch (Exception ex)
         {
-            await tx.RollbackAsync();
-            throw;
+            try { await tx.RollbackAsync(); } catch { }
+            return StatusCode(500, new { error = ex.Message });
         }
         finally
         {
