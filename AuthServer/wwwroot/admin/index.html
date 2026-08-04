@@ -97,9 +97,12 @@
         </div>
 
         <div id="tab-users" class="tab-content" style="display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
                 <h2>User Management</h2>
-                <button class="btn btn-primary" onclick="openUserModal()">+ Add User</button>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-secondary" onclick="reindexUsers()" title="Перенумеровать ID и UID всех юзеров по порядку регистрации">🔢 Перенумеровать ID/UID</button>
+                    <button class="btn btn-primary" onclick="openUserModal()">+ Add User</button>
+                </div>
             </div>
             <div class="card">
                 <table id="usersTable">
@@ -438,6 +441,18 @@
                 loadUsers();
             } else {
                 showToast('Failed to delete', 'error');
+            }
+        }
+
+        async function reindexUsers() {
+            if (!confirm('Перенумеровать ID и UID всех юзеров по порядку регистрации?\nОбычные юзеры получат 1..N, админ — последним. Это действие нельзя отменить.')) return;
+            const res = await api('/admin/reindex-users', { method: 'POST' });
+            if (res && res.ok) {
+                const d = await res.json();
+                showToast(`Готово: ${d.reindexed} юзеров перенумеровано`);
+                loadUsers();
+            } else {
+                showToast('Ошибка перенумерации', 'error');
             }
         }
 
