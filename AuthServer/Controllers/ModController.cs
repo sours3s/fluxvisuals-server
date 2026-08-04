@@ -42,7 +42,7 @@ public class ModController : ControllerBase
         return Ok(new
         {
             downloadUrl,
-            version = "1.21.11", // Можно вынести в настройки
+            version = "1.21.11.1", // маркер версии мода: лоадер по нему определяет, что jar нужно перекачать
             fileName = "fluxvisuals-mod-1.21.11.jar"
         });
     }
