@@ -40,6 +40,7 @@
     <!-- Статус -->
     <div class="acct-card">
       <h3>Статус доступа</h3>
+      <div class="row"><span class="k">UID</span><span class="v" id="uidText">—</span></div>
       <div class="row"><span class="k">Роль</span><span class="v"><span id="roleBadge" class="badge">…</span></span></div>
       <div class="row"><span class="k">Доступ</span><span class="v" id="accessText">…</span></div>
       <div class="row"><span class="k">Срок до</span><span class="v" id="expiryText">—</span></div>
@@ -110,6 +111,7 @@
     me = await requireAuth();
     if (!me) return;
     document.getElementById('acctName').textContent = me.username;
+    document.getElementById('uidText').textContent = me.uid ?? '—';
     document.getElementById('roleBadge').innerHTML = roleBadge(me.role);
     document.getElementById('hwidText').textContent = me.hwid ? 'Привязан' : 'Не привязан';
 

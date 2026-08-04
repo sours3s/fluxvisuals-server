@@ -27,6 +27,7 @@ public class AdminController : ControllerBase
             .Select(u => new
             {
                 u.Id,
+                u.Uid,
                 u.Username,
                 u.Role,
                 u.IsActive,
@@ -53,10 +54,24 @@ public class AdminController : ControllerBase
         var role = NormalizeRole(req.Role);
         var user = new User { Username = req.Username, Role = role };
         user.SetPassword(req.Password);
+
+        if (req.Uid.HasValue)
+        {
+            if (req.Uid.Value < 1)
+                return BadRequest(new { error = "UID должен быть не меньше 1" });
+            if (await _db.Users.AnyAsync(u => u.Uid == req.Uid.Value))
+                return Conflict(new { error = "Этот UID уже занят" });
+            user.Uid = req.Uid.Value;
+        }
+        else
+        {
+            user.Uid = (await _db.Users.MaxAsync(u => (int?)u.Uid) ?? 0) + 1;
+        }
+
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
 
-        return Ok(new { id = user.Id, username = user.Username, role });
+        return Ok(new { id = user.Id, uid = user.Uid, username = user.Username, role });
     }
 
     [HttpPut("users/{id}")]
@@ -70,6 +85,15 @@ public class AdminController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(req.Role))
             user.Role = NormalizeRole(req.Role);
+
+        if (req.Uid.HasValue)
+        {
+            if (req.Uid.Value < 1)
+                return BadRequest(new { error = "UID должен быть не меньше 1" });
+            if (await _db.Users.AnyAsync(u => u.Uid == req.Uid.Value && u.Id != id))
+                return Conflict(new { error = "Этот UID уже занят другим юзером" });
+            user.Uid = req.Uid.Value;
+        }
 
         user.IsActive = req.IsActive;
 
@@ -164,6 +188,6 @@ public class AdminController : ControllerBase
     }
 }
 
-public record CreateUserRequest(string Username, string Password, string? Role = null);
+public record CreateUserRequest(string Username, string Password, string? Role = null, int? Uid = null);
 public record UpdateUserRequest(string? Password = null, string? Role = null, bool IsActive = true,
-    int? GrantDays = null, bool SetLifetime = false, bool ClearAccess = false, bool ResetHwid = false);
+    int? GrantDays = null, bool SetLifetime = false, bool ClearAccess = false, bool ResetHwid = false, int? Uid = null);

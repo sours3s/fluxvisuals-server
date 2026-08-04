@@ -36,6 +36,10 @@ builder.Services.Configure<JwtSettings>(opt =>
 builder.Services.AddSingleton<JwtService>();
 builder.Services.AddHttpClient();
 
+// Одноразовые launch-тикеты (защита: мод работает только через лоадер).
+builder.Services.Configure<LaunchTicketSettings>(builder.Configuration.GetSection("LaunchTickets"));
+builder.Services.AddSingleton<LaunchTicketService>();
+
 // Платёжный шлюз
 builder.Services.Configure<CrystalPayOptions>(builder.Configuration.GetSection("Payment:CrystalPay"));
 builder.Services.AddSingleton<IPaymentProvider, CrystalPayProvider>();
@@ -80,6 +84,13 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
     db.Database.EnsureCreated();
+
+    // Миграция UID для уже существующих БД: EnsureCreated не добавит колонку, добавляем вручную
+    // (одинаковый синтаксис для SQLite и PostgreSQL). Новые БД уже имеют колонку — ALTER упадёт, ловим.
+    try { db.Database.ExecuteSqlRaw("ALTER TABLE \"Users\" ADD COLUMN \"Uid\" INTEGER NULL"); }
+    catch { /* колонка Uid уже есть */ }
+    db.Database.ExecuteSqlRaw("UPDATE \"Users\" SET \"Uid\" = \"Id\" WHERE \"Uid\" IS NULL");
+    db.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS \"IX_Users_Uid\" ON \"Users\"(\"Uid\")");
 
     if (!await db.Users.AnyAsync())
     {

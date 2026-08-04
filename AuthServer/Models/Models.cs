@@ -11,6 +11,10 @@ public class User
     [Key]
     public int Id { get; set; }
 
+    /// <summary>Публичный UID (порядковый номер). Выдаётся при регистрации по порядку
+    /// (первый зарегистрировавшийся = UID 1). Админ может менять любому юзеру.</summary>
+    public int? Uid { get; set; }
+
     [Required]
     [MaxLength(50)]
     public string Username { get; set; } = "";
@@ -113,6 +117,24 @@ public class AppSettings
     public int JwtExpiryHours { get; set; } = 24;
 
     public string ModDownloadUrl { get; set; } = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.0.0/fluxvisuals-mod-1.21.11.jar";
+}
+
+public class LaunchTicket
+{
+    [Key]
+    public string Jti { get; set; } = "";
+
+    public int UserId { get; set; }
+
+    [ForeignKey("UserId")]
+    public User? User { get; set; }
+
+    [Required]
+    [MaxLength(128)]
+    public string ChallengeHash { get; set; } = "";
+
+    public DateTime ExpiresAt { get; set; }
+    public DateTime? UsedAt { get; set; }
 }
 
 public class PaymentOrder

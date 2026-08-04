@@ -35,6 +35,7 @@ public class AccountController : ControllerBase
 
         return Ok(new
         {
+            uid = user.Uid,
             username = user.Username,
             role = user.Role,
             hasAccess = user.HasAccess(DateTime.UtcNow),

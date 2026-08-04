@@ -46,11 +46,12 @@ public class AuthController : ControllerBase
         // Админов/клиентов заводит админ через админ-панель.
         var user = new User { Username = req.Username, Role = "user" };
         user.SetPassword(req.Password);
+        user.Uid = (await _db.Users.MaxAsync(u => (int?)u.Uid) ?? 0) + 1; // первый зарегистрировавшийся = UID 1
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
 
         await LogAuth(user.Id, "register", req.IpAddress, null, true);
-        return Ok(new { id = user.Id, username = user.Username });
+        return Ok(new { id = user.Id, uid = user.Uid, username = user.Username });
     }
 
     [HttpPost("login")]
@@ -95,6 +96,7 @@ public class AuthController : ControllerBase
         return Ok(new
         {
             token,
+            uid = user.Uid,
             username = user.Username,
             role = user.Role,
             isAdmin = user.IsAdminRole,
@@ -117,6 +119,7 @@ public class AuthController : ControllerBase
 
         return Ok(new
         {
+            uid = user.Uid,
             username = user.Username,
             role = user.Role,
             isAdmin = user.IsAdminRole,
