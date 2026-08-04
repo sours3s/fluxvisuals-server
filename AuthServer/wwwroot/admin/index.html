@@ -445,7 +445,7 @@
         }
 
         async function reindexUsers() {
-            if (!confirm('Перенумеровать ID и UID всех юзеров по порядку регистрации?\nОбычные юзеры получат 1..N, админ — последним. Это действие нельзя отменить.')) return;
+            if (!confirm('Перенумеровать ID и UID всех юзеров по порядку регистрации (1..N)?\nUID = новый ID. Это действие нельзя отменить.')) return;
             const res = await api('/admin/reindex-users', { method: 'POST' });
             if (res && res.ok) {
                 const d = await res.json();

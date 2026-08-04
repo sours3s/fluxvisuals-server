@@ -183,18 +183,18 @@ public class AdminController : ControllerBase
     }
 
     /// <summary>Одноразовая операция (админ): перенумеровывает ID и UID всех юзеров по порядку
-    /// регистрации. Обычные юзеры получают 1..N, админы — дальше; UID у админа = null (нет публичного номера).
-    /// Связи в AuthLogs/LaunchTickets/PaymentOrders переносятся, автоинкремент сбрасывается.</summary>
+    /// регистрации (создания). UID = новый ID. Связи в AuthLogs/LaunchTickets/PaymentOrders
+    /// переносятся, автоинкремент сбрасывается. Работает на PostgreSQL и SQLite.</summary>
     [HttpPost("reindex-users")]
     public async Task<IActionResult> ReindexUsers()
     {
         var users = await _db.Users.OrderBy(u => u.CreatedAt).ThenBy(u => u.Id).ToListAsync();
         if (users.Count == 0) return Ok(new { reindexed = 0 });
 
+        // Нумерация по порядку создания ВСЕХ аккаунтов (админ = первый, если создан первым).
         var final = new Dictionary<int, int>(); // oldId -> newId
         int next = 1;
-        foreach (var u in users) if (!u.IsAdminRole) final[u.Id] = next++;
-        foreach (var u in users) if (u.IsAdminRole) final[u.Id] = next++;
+        foreach (var u in users) final[u.Id] = next++;
         int maxNew = final.Values.Max();
 
         var conn = _db.Database.GetDbConnection();
@@ -237,12 +237,12 @@ public class AdminController : ControllerBase
                 }
             }
 
-            // Фаза 1: временные ID (+1_000_000), чтобы не было коллизий ключей.
-            // Всё через сырой SQL — EF запрещает менять PK у отслеживаемой сущности.
+            // Фаза 1: временные ID (+1_000_000) и UID=NULL, чтобы не было коллизий ни PK,
+            // ни уникального индекса на Uid. Всё через сырой SQL — EF запрещает менять PK.
             var temp = new Dictionary<int, int>();
             foreach (var u in users) temp[u.Id] = u.Id + 1_000_000;
             foreach (var (old, t) in temp)
-                await ExecAsync(conn, tx.GetDbTransaction(), $"UPDATE \"Users\" SET \"Id\" = {t} WHERE \"Id\" = {old}");
+                await ExecAsync(conn, tx.GetDbTransaction(), $"UPDATE \"Users\" SET \"Id\" = {t}, \"Uid\" = NULL WHERE \"Id\" = {old}");
             foreach (var (old, t) in temp)
             {
                 await ExecAsync(conn, tx.GetDbTransaction(), $"UPDATE \"AuthLogs\" SET \"UserId\" = {t} WHERE \"UserId\" = {old}");
@@ -250,13 +250,12 @@ public class AdminController : ControllerBase
                 await ExecAsync(conn, tx.GetDbTransaction(), $"UPDATE \"PaymentOrders\" SET \"UserId\" = {t} WHERE \"UserId\" = {old}");
             }
 
-            // Фаза 2: финальные ID + UID (у админа UID = NULL).
+            // Фаза 2: финальные ID + UID (UID = новый ID для всех).
             foreach (var u in users)
             {
                 int t = temp[u.Id];
                 int nid = final[u.Id];
-                string uid = u.IsAdminRole ? "NULL" : nid.ToString();
-                await ExecAsync(conn, tx.GetDbTransaction(), $"UPDATE \"Users\" SET \"Id\" = {nid}, \"Uid\" = {uid} WHERE \"Id\" = {t}");
+                await ExecAsync(conn, tx.GetDbTransaction(), $"UPDATE \"Users\" SET \"Id\" = {nid}, \"Uid\" = {nid} WHERE \"Id\" = {t}");
                 await ExecAsync(conn, tx.GetDbTransaction(), $"UPDATE \"AuthLogs\" SET \"UserId\" = {nid} WHERE \"UserId\" = {t}");
                 await ExecAsync(conn, tx.GetDbTransaction(), $"UPDATE \"LaunchTickets\" SET \"UserId\" = {nid} WHERE \"UserId\" = {t}");
                 await ExecAsync(conn, tx.GetDbTransaction(), $"UPDATE \"PaymentOrders\" SET \"UserId\" = {nid} WHERE \"UserId\" = {t}");
