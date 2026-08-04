@@ -79,6 +79,11 @@ var app = builder.Build();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+// Диагностика запуска: если ключ тикетов не задан — явно пишем в лог (иначе лоадер получит
+// «Сервер отклонил выдачу тикета» без понятной причины).
+if (string.IsNullOrWhiteSpace(builder.Configuration["LaunchTickets:PrivateKey"]))
+    app.Logger.LogError("LaunchTickets:PrivateKey НЕ ЗАДАН. Установи env LaunchTickets__PrivateKey = содержимое flux-private.pem — иначе /api/launch/issue вернёт ошибку.");
+
 // Ensure database created and seed admin
 using (var scope = app.Services.CreateScope())
 {

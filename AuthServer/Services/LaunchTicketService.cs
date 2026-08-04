@@ -23,17 +23,25 @@ public sealed class LaunchTicketService
 {
     private readonly AuthDbContext _db;
     private readonly LaunchTicketSettings _settings;
-    private readonly RSA _signingKey;
+    private RSA? _signingKey;
 
     public LaunchTicketService(AuthDbContext db, IOptions<LaunchTicketSettings> options)
     {
         _db = db;
         _settings = options.Value;
-        if (string.IsNullOrWhiteSpace(_settings.PrivateKey))
-            throw new InvalidOperationException("LaunchTickets:PrivateKey is not configured.");
+    }
 
-        _signingKey = RSA.Create();
-        _signingKey.ImportFromPem(_settings.PrivateKey);
+    /// <summary>Загружает подписывающий ключ лениво. Если не задан — понятная ошибка, а не 500.</summary>
+    private RSA EnsureSigningKey()
+    {
+        if (_signingKey != null) return _signingKey;
+        if (string.IsNullOrWhiteSpace(_settings.PrivateKey))
+            throw new LaunchTicketException("not_configured",
+                "Приватный ключ тикетов не задан: установи LaunchTickets__PrivateKey на сервере (Render → env).");
+        var key = RSA.Create();
+        key.ImportFromPem(_settings.PrivateKey);
+        _signingKey = key;
+        return key;
     }
 
     public async Task<string> IssueAsync(User user, string challenge, string hwid)
@@ -76,7 +84,7 @@ public sealed class LaunchTicketService
             notBefore: now,
             expires: expires,
             signingCredentials: new SigningCredentials(
-                new RsaSecurityKey(_signingKey) { KeyId = _settings.KeyId },
+                new RsaSecurityKey(EnsureSigningKey()) { KeyId = _settings.KeyId },
                 SecurityAlgorithms.RsaSha256));
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
@@ -96,7 +104,7 @@ public sealed class LaunchTicketService
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.FromSeconds(2),
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new RsaSecurityKey(_signingKey),
+                IssuerSigningKey = new RsaSecurityKey(EnsureSigningKey()),
             };
             principal = new JwtSecurityTokenHandler().ValidateToken(token, validation, out _);
             jti = principal.FindFirstValue(JwtRegisteredClaimNames.Jti)
