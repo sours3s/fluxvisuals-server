@@ -57,7 +57,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtSettings["Issuer"] ?? "FluxVisualsAuth",
             ValidAudience = jwtSettings["Audience"] ?? "FluxVisualsLoader",
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)) { KeyId = "flux-jwt" },
             ClockSkew = TimeSpan.Zero,
             RoleClaimType = "role"
         };

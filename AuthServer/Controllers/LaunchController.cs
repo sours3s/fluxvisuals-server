@@ -43,6 +43,12 @@ public sealed class LaunchController : ControllerBase
         {
             return StatusCode(StatusCodes.Status403Forbidden, new { code = ex.Code, error = ex.Message });
         }
+        catch (Exception ex)
+        {
+            // Неожиданная ошибка (БД, ключ и т.п.) — отдаём причину, чтобы лоадер показал её, а не пустое тело.
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new { code = "server_error", error = ex.Message });
+        }
     }
 
     [HttpPost("consume")]

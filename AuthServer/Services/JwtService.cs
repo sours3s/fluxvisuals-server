@@ -26,7 +26,9 @@ public class JwtService
 
     public string GenerateToken(User user)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret));
+        // KeyId обязателен: IdentityModel 8.x не принимает токен без заголовка kid
+        // (иначе любой валидный логин-токен падает с IDX10517 после свежего restore).
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret)) { KeyId = "flux-jwt" };
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
