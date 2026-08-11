@@ -23,16 +23,33 @@ public class ModController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetVersion()
     {
-        var settings = await _db.AppSettings.FindAsync(1);
-        if (settings == null)
+        // Читаем через EF Core, если колонки нет - используем конфиг
+        string modDownloadUrl = "";
+        string loaderDownloadUrl = "";
+
+        try
         {
-            settings = new AppSettings { Id = 1 };
-            _db.AppSettings.Add(settings);
-            await _db.SaveChangesAsync();
+            var settings = await _db.AppSettings.FindAsync(1);
+            if (settings != null)
+            {
+                modDownloadUrl = settings.ModDownloadUrl ?? "";
+                // LoaderDownloadUrl может отсутствовать в старой БД
+                try
+                {
+                    loaderDownloadUrl = settings.LoaderDownloadUrl ?? "";
+                }
+                catch
+                {
+                    loaderDownloadUrl = "";
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // Игнорируем ошибки чтения БД
         }
 
         // Приоритет: URL из админки (БД) → из appsettings (Mod:DownloadUrl) → по адресу запроса.
-        string modDownloadUrl = settings.ModDownloadUrl;
         if (string.IsNullOrWhiteSpace(modDownloadUrl) ||
             modDownloadUrl.StartsWith("CHANGE", StringComparison.OrdinalIgnoreCase))
         {
@@ -44,7 +61,6 @@ public class ModController : ControllerBase
         }
 
         // Loader download URL
-        string loaderDownloadUrl = settings.LoaderDownloadUrl;
         if (string.IsNullOrWhiteSpace(loaderDownloadUrl) ||
             loaderDownloadUrl.StartsWith("CHANGE", StringComparison.OrdinalIgnoreCase))
         {
