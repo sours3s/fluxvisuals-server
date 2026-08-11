@@ -103,4 +103,8 @@ public class ModController : ControllerBase
     }
 }
 
-public record UpdateModVersionRequest(string ModDownloadUrl, string? LoaderDownloadUrl = null);
+public record UpdateModVersionRequest
+{
+    public string ModDownloadUrl { get; init; } = "";
+    public string LoaderDownloadUrl { get; init; } = "";
+}
