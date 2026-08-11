@@ -25,7 +25,11 @@ public class ModController : ControllerBase
     {
         var settings = await _db.AppSettings.FindAsync(1);
         if (settings == null)
-            return NotFound();
+        {
+            settings = new AppSettings { Id = 1 };
+            _db.AppSettings.Add(settings);
+            await _db.SaveChangesAsync();
+        }
 
         // Приоритет: URL из админки (БД) → из appsettings (Mod:DownloadUrl) → по адресу запроса.
         string modDownloadUrl = settings.ModDownloadUrl;
@@ -36,7 +40,7 @@ public class ModController : ControllerBase
         }
         if (string.IsNullOrWhiteSpace(modDownloadUrl))
         {
-            modDownloadUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.12/fluxvisuals-mod-1.0.12.jar";
+            modDownloadUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.13/fluxvisuals-1.0.13.jar";
         }
 
         // Loader download URL
@@ -55,7 +59,7 @@ public class ModController : ControllerBase
         {
             downloadUrl = modDownloadUrl,
             loaderDownloadUrl,
-            version = "1.0.13", // маркер версии мода: лоадер по нему определяет, что jar нужно перекачать
+            version = "1.0.13",
             fileName = "fluxvisuals-mod-1.0.13.jar"
         });
     }
