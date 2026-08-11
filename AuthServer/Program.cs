@@ -76,8 +76,22 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Serve static files for admin panel
-app.UseDefaultFiles();
+app.UseDefaultFiles(new DefaultFilesOptions
+{
+    DefaultFileNames = new List<string> { "index.html" }
+});
 app.UseStaticFiles();
+
+// Redirect /index.html to / (for root only, not for /admin)
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/index.html")
+    {
+        context.Response.Redirect("/");
+        return;
+    }
+    await next();
+});
 
 // Диагностика запуска: если ключ тикетов не задан — явно пишем в лог (иначе лоадер получит
 // «Сервер отклонил выдачу тикета» без понятной причины).
