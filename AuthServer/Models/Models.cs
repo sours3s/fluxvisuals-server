@@ -117,6 +117,8 @@ public class AppSettings
     public int JwtExpiryHours { get; set; } = 24;
 
     public string ModDownloadUrl { get; set; } = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.0.0/fluxvisuals-mod-1.21.11.jar";
+
+    public string LoaderDownloadUrl { get; set; } = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.8.loader/FluxVisualsLoader.exe";
 }
 
 public class LaunchTicket

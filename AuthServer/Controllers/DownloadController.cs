@@ -48,7 +48,8 @@ public class DownloadController : ControllerBase
                 error = "Доступ не оплачен. Купите клиент в личном кабинете."
             });
 
-        string url = _configuration["Loader:DownloadUrl"] ?? "";
+        // Получаем URL из настроек (БД -> appsettings)
+        string url = await GetLoaderDownloadUrlAsync();
         if (string.IsNullOrWhiteSpace(url))
             return StatusCode(StatusCodes.Status503ServiceUnavailable, new { error = "Файл клиента не настроен" });
 
@@ -56,6 +57,17 @@ public class DownloadController : ControllerBase
 
         Response.Headers["Content-Disposition"] = "attachment; filename=\"FluxVisualsLoader.exe\"";
         return File(bytes, "application/octet-stream");
+    }
+
+    private async Task<string> GetLoaderDownloadUrlAsync()
+    {
+        var settings = await _db.AppSettings.FindAsync(1);
+        if (settings != null && !string.IsNullOrWhiteSpace(settings.LoaderDownloadUrl) &&
+            !settings.LoaderDownloadUrl.StartsWith("CHANGE", StringComparison.OrdinalIgnoreCase))
+        {
+            return settings.LoaderDownloadUrl;
+        }
+        return _configuration["Loader:DownloadUrl"] ?? "";
     }
 
     private static async Task<byte[]> GetLoaderBytesAsync(string url, CancellationToken ct)

@@ -28,22 +28,35 @@ public class ModController : ControllerBase
             return NotFound();
 
         // Приоритет: URL из админки (БД) → из appsettings (Mod:DownloadUrl) → по адресу запроса.
-        string downloadUrl = settings.ModDownloadUrl;
-        if (string.IsNullOrWhiteSpace(downloadUrl) ||
-            downloadUrl.StartsWith("CHANGE", StringComparison.OrdinalIgnoreCase))
+        string modDownloadUrl = settings.ModDownloadUrl;
+        if (string.IsNullOrWhiteSpace(modDownloadUrl) ||
+            modDownloadUrl.StartsWith("CHANGE", StringComparison.OrdinalIgnoreCase))
         {
-            downloadUrl = _configuration["Mod:DownloadUrl"] ?? "";
+            modDownloadUrl = _configuration["Mod:DownloadUrl"] ?? "";
         }
-        if (string.IsNullOrWhiteSpace(downloadUrl))
+        if (string.IsNullOrWhiteSpace(modDownloadUrl))
         {
-            downloadUrl = $"{Request.Scheme}://{Request.Host}/mods/fluxvisuals-mod-1.21.11.jar";
+            modDownloadUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.12/fluxvisuals-mod-1.0.12.jar";
+        }
+
+        // Loader download URL
+        string loaderDownloadUrl = settings.LoaderDownloadUrl;
+        if (string.IsNullOrWhiteSpace(loaderDownloadUrl) ||
+            loaderDownloadUrl.StartsWith("CHANGE", StringComparison.OrdinalIgnoreCase))
+        {
+            loaderDownloadUrl = _configuration["Loader:DownloadUrl"] ?? "";
+        }
+        if (string.IsNullOrWhiteSpace(loaderDownloadUrl))
+        {
+            loaderDownloadUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.10.loader/FluxVisualsLoader.exe";
         }
 
         return Ok(new
         {
-            downloadUrl,
-            version = "1.21.11.1", // маркер версии мода: лоадер по нему определяет, что jar нужно перекачать
-            fileName = "fluxvisuals-mod-1.21.11.jar"
+            downloadUrl = modDownloadUrl,
+            loaderDownloadUrl,
+            version = "1.0.13", // маркер версии мода: лоадер по нему определяет, что jar нужно перекачать
+            fileName = "fluxvisuals-mod-1.0.13.jar"
         });
     }
 
@@ -54,11 +67,15 @@ public class ModController : ControllerBase
         var settings = await _db.AppSettings.FindAsync(1);
         if (settings == null) return NotFound();
 
-        settings.ModDownloadUrl = req.DownloadUrl;
+        settings.ModDownloadUrl = req.ModDownloadUrl;
+        if (!string.IsNullOrWhiteSpace(req.LoaderDownloadUrl))
+        {
+            settings.LoaderDownloadUrl = req.LoaderDownloadUrl;
+        }
         await _db.SaveChangesAsync();
 
-        return Ok(new { downloadUrl = settings.ModDownloadUrl });
+        return Ok(new { modDownloadUrl = settings.ModDownloadUrl, loaderDownloadUrl = settings.LoaderDownloadUrl });
     }
 }
 
-public record UpdateModVersionRequest(string DownloadUrl);
+public record UpdateModVersionRequest(string ModDownloadUrl, string? LoaderDownloadUrl = null);

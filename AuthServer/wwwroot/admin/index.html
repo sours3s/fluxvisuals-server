@@ -132,6 +132,13 @@
                 </div>
                 <button class="btn btn-primary" onclick="saveModUrl()">Save Mod URL</button>
             </div>
+            <div class="card" style="margin-top: 20px;">
+                <div class="form-group">
+                    <label>Loader Download URL</label>
+                    <input type="text" id="loaderUrlInput" placeholder="https://..." style="width:100%;">
+                </div>
+                <button class="btn btn-primary" onclick="saveLoaderUrl()">Save Loader URL</button>
+            </div>
         </div>
 
         <!-- User Modal -->
@@ -295,6 +302,7 @@
                 loadUsers();
                 loadLogs();
                 loadModUrl();
+                loadLoaderUrl();
             }
         }
 
@@ -481,9 +489,27 @@
             const url = document.getElementById('modUrlInput').value;
             const res = await api('/mod/version', {
                 method: 'POST',
-                body: JSON.stringify({ downloadUrl: url })
+                body: JSON.stringify({ modDownloadUrl: url })
             });
             if (res && res.ok) showToast('Mod URL updated');
+            else showToast('Failed', 'error');
+        }
+
+        async function loadLoaderUrl() {
+            const res = await api('/mod/version');
+            if (res) {
+                const data = await res.json();
+                document.getElementById('loaderUrlInput').value = data.loaderDownloadUrl;
+            }
+        }
+
+        async function saveLoaderUrl() {
+            const url = document.getElementById('loaderUrlInput').value;
+            const res = await api('/mod/version', {
+                method: 'POST',
+                body: JSON.stringify({ loaderDownloadUrl: url })
+            });
+            if (res && res.ok) showToast('Loader URL updated');
             else showToast('Failed', 'error');
         }
 
