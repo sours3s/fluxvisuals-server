@@ -65,13 +65,18 @@ public class ModController : ControllerBase
     public async Task<IActionResult> UpdateVersion([FromBody] UpdateModVersionRequest req)
     {
         var settings = await _db.AppSettings.FindAsync(1);
-        if (settings == null) return NotFound();
-
-        settings.ModDownloadUrl = req.ModDownloadUrl;
-        if (!string.IsNullOrWhiteSpace(req.LoaderDownloadUrl))
+        if (settings == null)
         {
-            settings.LoaderDownloadUrl = req.LoaderDownloadUrl;
+            settings = new AppSettings { Id = 1 };
+            _db.AppSettings.Add(settings);
         }
+
+        if (!string.IsNullOrWhiteSpace(req.ModDownloadUrl))
+            settings.ModDownloadUrl = req.ModDownloadUrl;
+
+        if (!string.IsNullOrWhiteSpace(req.LoaderDownloadUrl))
+            settings.LoaderDownloadUrl = req.LoaderDownloadUrl;
+
         await _db.SaveChangesAsync();
 
         return Ok(new { modDownloadUrl = settings.ModDownloadUrl, loaderDownloadUrl = settings.LoaderDownloadUrl });
