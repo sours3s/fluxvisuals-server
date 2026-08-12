@@ -335,6 +335,7 @@
                     <td>
                         <div class="actions">
                             <button class="btn btn-secondary" style="padding:6px 10px;font-size:0.8rem;" onclick="editUser(${u.id}, ${u.uid ?? 'null'}, '${u.username}', '${u.role}', ${u.isActive}, ${u.hasAccess}, '${(u.accessExpiresAt ? u.accessExpiresAt : '')}', '${u.hwid || ''}')">Edit</button>
+                            ${u.hwid ? `<button class="btn btn-secondary" style="padding:6px 10px;font-size:0.8rem;" onclick="resetHwid(${u.id}, '${u.username}')" title="Сбросить привязку HWID">Reset HWID</button>` : ''}
                             <button class="btn btn-danger" style="padding:6px 10px;font-size:0.8rem;" onclick="deleteUser(${u.id}, '${u.username}')">Delete</button>
                         </div>
                     </td>
@@ -452,6 +453,21 @@
                 loadUsers();
             } else {
                 showToast('Failed to delete', 'error');
+            }
+        }
+
+        async function resetHwid(id, username) {
+            if (!confirm(`Сбросить HWID у "${username}"?`)) return;
+            const res = await api('/admin/users/' + id, {
+                method: 'PUT',
+                body: JSON.stringify({ resetHwid: true, isActive: true })
+            });
+            if (res && res.ok) {
+                showToast(`HWID сброшен у "${username}"`);
+                loadUsers();
+            } else {
+                const err = await res?.json();
+                showToast(err?.error || 'Не удалось сбросить HWID', 'error');
             }
         }
 
