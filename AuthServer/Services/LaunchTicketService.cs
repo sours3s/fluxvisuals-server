@@ -65,8 +65,21 @@ public sealed class LaunchTicketService
     {
         if (!user.IsActive || !user.HasAccess(DateTime.UtcNow))
             throw new LaunchTicketException("no_access", "Доступ к клиенту отсутствует или истёк.");
-        if (string.IsNullOrWhiteSpace(user.Hwid) || !string.Equals(user.Hwid, hwid, StringComparison.Ordinal))
+
+        // Автопривязка HWID при первой выдаче тикета — так же, как при логине.
+        // Иначе аккаунты, созданные админом (Hwid пустой), никогда не получат тикет.
+        if (string.IsNullOrWhiteSpace(user.Hwid))
+        {
+            if (!string.IsNullOrWhiteSpace(hwid))
+            {
+                user.LockHwid(hwid);
+                await _db.SaveChangesAsync();
+            }
+        }
+        else if (!string.Equals(user.Hwid, hwid, StringComparison.Ordinal))
+        {
             throw new LaunchTicketException("hwid_mismatch", "HWID не совпадает с этим аккаунтом.");
+        }
 
         byte[] challengeBytes;
         try { challengeBytes = Base64UrlEncoder.DecodeBytes(challenge); }
