@@ -39,11 +39,24 @@ public class ModController : ControllerBase
             downloadUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.17/fluxvisuals-1.0.17.jar";
         }
 
+        // Loader URL
+        string loaderUrl = settings.LoaderDownloadUrl;
+        if (string.IsNullOrWhiteSpace(loaderUrl) ||
+            loaderUrl.StartsWith("CHANGE", StringComparison.OrdinalIgnoreCase))
+        {
+            loaderUrl = _configuration["Loader:DownloadUrl"] ?? "";
+        }
+        if (string.IsNullOrWhiteSpace(loaderUrl))
+        {
+            loaderUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.12-loader/FluxVisualsLoader.exe";
+        }
+
         return Ok(new
         {
             downloadUrl,
             version = "1.0.17", // маркер версии мода: лоадер по нему определяет, что jar нужно перекачать
-            fileName = "fluxvisuals-1.0.17.jar"
+            fileName = "fluxvisuals-1.0.17.jar",
+            loaderDownloadUrl = loaderUrl
         });
     }
 
@@ -59,6 +72,20 @@ public class ModController : ControllerBase
 
         return Ok(new { downloadUrl = settings.ModDownloadUrl });
     }
+
+    [HttpPost("loader")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> UpdateLoader([FromBody] UpdateLoaderRequest req)
+    {
+        var settings = await _db.AppSettings.FindAsync(1);
+        if (settings == null) return NotFound();
+
+        settings.LoaderDownloadUrl = req.DownloadUrl;
+        await _db.SaveChangesAsync();
+
+        return Ok(new { downloadUrl = settings.LoaderDownloadUrl });
+    }
 }
 
 public record UpdateModVersionRequest(string DownloadUrl);
+public record UpdateLoaderRequest(string DownloadUrl);

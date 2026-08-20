@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FluxVisuals Admin Panel</title>
-    <link rel="icon" href="/favicon.ico" sizes="32x32">
-    <link rel="icon" href="/favicon.ico" sizes="16x16">
-    <link rel="shortcut icon" href="/favicon.ico">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; }
@@ -135,7 +132,7 @@
                 </div>
                 <button class="btn btn-primary" onclick="saveModUrl()">Save Mod URL</button>
             </div>
-            <div class="card" style="margin-top: 20px;">
+            <div class="card" style="margin-top:20px;">
                 <div class="form-group">
                     <label>Loader Download URL</label>
                     <input type="text" id="loaderUrlInput" placeholder="https://..." style="width:100%;">
@@ -305,7 +302,6 @@
                 loadUsers();
                 loadLogs();
                 loadModUrl();
-                loadLoaderUrl();
             }
         }
 
@@ -335,7 +331,6 @@
                     <td>
                         <div class="actions">
                             <button class="btn btn-secondary" style="padding:6px 10px;font-size:0.8rem;" onclick="editUser(${u.id}, ${u.uid ?? 'null'}, '${u.username}', '${u.role}', ${u.isActive}, ${u.hasAccess}, '${(u.accessExpiresAt ? u.accessExpiresAt : '')}', '${u.hwid || ''}')">Edit</button>
-                            ${u.hwid ? `<button class="btn btn-secondary" style="padding:6px 10px;font-size:0.8rem;" onclick="resetHwid(${u.id}, '${u.username}')" title="Сбросить привязку HWID">Reset HWID</button>` : ''}
                             <button class="btn btn-danger" style="padding:6px 10px;font-size:0.8rem;" onclick="deleteUser(${u.id}, '${u.username}')">Delete</button>
                         </div>
                     </td>
@@ -456,21 +451,6 @@
             }
         }
 
-        async function resetHwid(id, username) {
-            if (!confirm(`Сбросить HWID у "${username}"?`)) return;
-            const res = await api('/admin/users/' + id, {
-                method: 'PUT',
-                body: JSON.stringify({ resetHwid: true, isActive: true })
-            });
-            if (res && res.ok) {
-                showToast(`HWID сброшен у "${username}"`);
-                loadUsers();
-            } else {
-                const err = await res?.json();
-                showToast(err?.error || 'Не удалось сбросить HWID', 'error');
-            }
-        }
-
         async function reindexUsers() {
             if (!confirm('Перенумеровать ID и UID всех юзеров по порядку регистрации (1..N)?\nUID = новый ID. Это действие нельзя отменить.')) return;
             const res = await api('/admin/reindex-users', { method: 'POST' });
@@ -501,6 +481,7 @@
             if (res) {
                 const data = await res.json();
                 document.getElementById('modUrlInput').value = data.downloadUrl;
+                document.getElementById('loaderUrlInput').value = data.loaderDownloadUrl || '';
             }
         }
 
@@ -508,25 +489,17 @@
             const url = document.getElementById('modUrlInput').value;
             const res = await api('/mod/version', {
                 method: 'POST',
-                body: JSON.stringify({ modDownloadUrl: url })
+                body: JSON.stringify({ downloadUrl: url })
             });
             if (res && res.ok) showToast('Mod URL updated');
             else showToast('Failed', 'error');
         }
 
-        async function loadLoaderUrl() {
-            const res = await api('/mod/version');
-            if (res) {
-                const data = await res.json();
-                document.getElementById('loaderUrlInput').value = data.loaderDownloadUrl;
-            }
-        }
-
         async function saveLoaderUrl() {
             const url = document.getElementById('loaderUrlInput').value;
-            const res = await api('/mod/version', {
+            const res = await api('/mod/loader', {
                 method: 'POST',
-                body: JSON.stringify({ loaderDownloadUrl: url })
+                body: JSON.stringify({ downloadUrl: url })
             });
             if (res && res.ok) showToast('Loader URL updated');
             else showToast('Failed', 'error');
