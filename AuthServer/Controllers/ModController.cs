@@ -23,60 +23,27 @@ public class ModController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetVersion()
     {
-        // Читаем через EF Core, если колонки нет - используем конфиг
-        string modDownloadUrl = "";
-        string loaderDownloadUrl = "";
-
-        try
-        {
-            var settings = await _db.AppSettings.FindAsync(1);
-            if (settings != null)
-            {
-                modDownloadUrl = settings.ModDownloadUrl ?? "";
-                // LoaderDownloadUrl может отсутствовать в старой БД
-                try
-                {
-                    loaderDownloadUrl = settings.LoaderDownloadUrl ?? "";
-                }
-                catch
-                {
-                    loaderDownloadUrl = "";
-                }
-            }
-        }
-        catch (Exception)
-        {
-            // Игнорируем ошибки чтения БД
-        }
+        var settings = await _db.AppSettings.FindAsync(1);
+        if (settings == null)
+            return NotFound();
 
         // Приоритет: URL из админки (БД) → из appsettings (Mod:DownloadUrl) → по адресу запроса.
-        if (string.IsNullOrWhiteSpace(modDownloadUrl) ||
-            modDownloadUrl.StartsWith("CHANGE", StringComparison.OrdinalIgnoreCase))
+        string downloadUrl = settings.ModDownloadUrl;
+        if (string.IsNullOrWhiteSpace(downloadUrl) ||
+            downloadUrl.StartsWith("CHANGE", StringComparison.OrdinalIgnoreCase))
         {
-            modDownloadUrl = _configuration["Mod:DownloadUrl"] ?? "";
+            downloadUrl = _configuration["Mod:DownloadUrl"] ?? "";
         }
-        if (string.IsNullOrWhiteSpace(modDownloadUrl))
+        if (string.IsNullOrWhiteSpace(downloadUrl))
         {
-            modDownloadUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.13/fluxvisuals-1.0.13.jar";
-        }
-
-        // Loader download URL
-        if (string.IsNullOrWhiteSpace(loaderDownloadUrl) ||
-            loaderDownloadUrl.StartsWith("CHANGE", StringComparison.OrdinalIgnoreCase))
-        {
-            loaderDownloadUrl = _configuration["Loader:DownloadUrl"] ?? "";
-        }
-        if (string.IsNullOrWhiteSpace(loaderDownloadUrl))
-        {
-            loaderDownloadUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.10.loader/FluxVisualsLoader.exe";
+            downloadUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.17/fluxvisuals-1.0.17.jar";
         }
 
         return Ok(new
         {
-            downloadUrl = modDownloadUrl,
-            loaderDownloadUrl,
-            version = "1.0.13",
-            fileName = "fluxvisuals-mod-1.0.13.jar"
+            downloadUrl,
+            version = "1.0.17", // маркер версии мода: лоадер по нему определяет, что jar нужно перекачать
+            fileName = "fluxvisuals-1.0.17.jar"
         });
     }
 
@@ -85,26 +52,13 @@ public class ModController : ControllerBase
     public async Task<IActionResult> UpdateVersion([FromBody] UpdateModVersionRequest req)
     {
         var settings = await _db.AppSettings.FindAsync(1);
-        if (settings == null)
-        {
-            settings = new AppSettings { Id = 1 };
-            _db.AppSettings.Add(settings);
-        }
+        if (settings == null) return NotFound();
 
-        if (!string.IsNullOrWhiteSpace(req.ModDownloadUrl))
-            settings.ModDownloadUrl = req.ModDownloadUrl;
-
-        if (!string.IsNullOrWhiteSpace(req.LoaderDownloadUrl))
-            settings.LoaderDownloadUrl = req.LoaderDownloadUrl;
-
+        settings.ModDownloadUrl = req.DownloadUrl;
         await _db.SaveChangesAsync();
 
-        return Ok(new { modDownloadUrl = settings.ModDownloadUrl, loaderDownloadUrl = settings.LoaderDownloadUrl });
+        return Ok(new { downloadUrl = settings.ModDownloadUrl });
     }
 }
 
-public record UpdateModVersionRequest
-{
-    public string ModDownloadUrl { get; init; } = "";
-    public string LoaderDownloadUrl { get; init; } = "";
-}
+public record UpdateModVersionRequest(string DownloadUrl);
