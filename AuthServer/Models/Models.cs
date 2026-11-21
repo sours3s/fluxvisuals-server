@@ -26,12 +26,12 @@ public class User
     [MaxLength(500)]
     public string? Hwid { get; set; }
 
-    /// <summary>Роль: "admin" | "client" (купил доступ) | "user" (обычный, без доступа).</summary>
+    /// <summary>Роль: "admin" | "free" (бесплатный доступ) | "client" (старая платная) | "user" (без доступа).</summary>
     [Required]
     [MaxLength(20)]
-    public string Role { get; set; } = "user";
+    public string Role { get; set; } = "free";
 
-    /// <summary>Срок доступа для client. null = пожизненно.</summary>
+    /// <summary>Срок доступа для client. Для free не используется.</summary>
     public DateTime? AccessExpiresAt { get; set; }
 
     public bool IsActive { get; set; } = true;
@@ -44,11 +44,12 @@ public class User
 
     public bool IsAdminRole => Role == "admin";
 
-    /// <summary>Есть ли право пользоваться клиентом: роль client/admin и срок не истёк (или пожизненно).</summary>
+    /// <summary>Есть ли право пользоваться клиентом: free/client/admin, активен и срок не истёк.</summary>
     public bool HasAccess(DateTime now)
     {
-        if (Role != "client" && Role != "admin") return false;
+        if (Role != "free" && Role != "client" && Role != "admin") return false;
         if (!IsActive) return false;
+        if (Role == "free") return true;
         return AccessExpiresAt == null || AccessExpiresAt > now;
     }
 

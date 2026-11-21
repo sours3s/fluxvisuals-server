@@ -33,7 +33,7 @@ public class AdminController : ControllerBase
                 u.Role,
                 u.IsActive,
                 u.AccessExpiresAt,
-                HasAccess = u.Role != "user" && u.IsActive && (u.AccessExpiresAt == null || u.AccessExpiresAt > now),
+                HasAccess = u.Role != "user" && u.IsActive && (u.Role == "free" || u.AccessExpiresAt == null || u.AccessExpiresAt > now),
                 u.CreatedAt,
                 u.LastLoginAt,
                 u.Hwid,
@@ -114,7 +114,8 @@ public class AdminController : ControllerBase
         }
         if (req.ClearAccess)
         {
-            if (user.Role == "client") user.Role = "user";
+            // free и client лишаются доступа одинаково — роль меняется на user.
+            if (user.Role == "client" || user.Role == "free") user.Role = "user";
             user.AccessExpiresAt = null;
         }
 
@@ -173,9 +174,12 @@ public class AdminController : ControllerBase
             totalUsers = await _db.Users.CountAsync(),
             activeUsers = await _db.Users.CountAsync(u => u.IsActive),
             admins = await _db.Users.CountAsync(u => u.Role == "admin"),
+            free = await _db.Users.CountAsync(u => u.Role == "free"),
             clients = await _db.Users.CountAsync(u => u.Role == "client"),
             users = await _db.Users.CountAsync(u => u.Role == "user"),
-            clientsWithAccess = await _db.Users.CountAsync(u => u.Role == "client" && u.IsActive && (u.AccessExpiresAt == null || u.AccessExpiresAt > now)),
+            clientsWithAccess = await _db.Users.CountAsync(u => u.IsActive &&
+                (u.Role == "free" || u.Role == "admin" ||
+                 (u.Role == "client" && (u.AccessExpiresAt == null || u.AccessExpiresAt > now)))),
             expiredClients = await _db.Users.CountAsync(u => u.Role == "client" && u.AccessExpiresAt != null && u.AccessExpiresAt <= now),
             hwidLocked = await _db.Users.CountAsync(u => !string.IsNullOrEmpty(u.Hwid)),
             recentLogins = await _db.AuthLogs.CountAsync(l => l.Action == "login" && l.Success && l.CreatedAt > now.AddDays(-7))
@@ -328,8 +332,8 @@ public class AdminController : ControllerBase
 
     private static string NormalizeRole(string? role)
     {
-        var r = (role ?? "user").Trim().ToLowerInvariant();
-        return r is "admin" or "client" or "user" ? r : "user";
+        var r = (role ?? "free").Trim().ToLowerInvariant();
+        return r is "admin" or "client" or "free" or "user" ? r : "free";
     }
 }
 

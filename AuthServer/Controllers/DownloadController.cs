@@ -28,7 +28,7 @@ public class DownloadController : ControllerBase
 
     /// <summary>
     /// Скачивание лоадера с сайта (без редиректа на GitHub).
-    /// Доступен только клиентам/админам с оплаченным доступом.
+    /// Доступен всем активным аккаунтам с ролью free, client или admin.
     /// </summary>
     [HttpGet("loader")]
     [Authorize]
@@ -45,7 +45,7 @@ public class DownloadController : ControllerBase
         if (!user.HasAccess(DateTime.UtcNow))
             return StatusCode(StatusCodes.Status403Forbidden, new
             {
-                error = "Доступ не оплачен. Купите клиент в личном кабинете."
+                error = "Доступ к клиенту закрыт. Проверьте аккаунт в личном кабинете."
             });
 
         // Получаем URL из настроек (БД -> appsettings)

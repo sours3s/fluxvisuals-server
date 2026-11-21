@@ -24,7 +24,6 @@
     <div class="side-label">Кабинет</div>
     <nav class="side-nav">
       <button class="side-link active" data-view="overview"><i>▦</i> Обзор</button>
-      <button class="side-link" data-view="access"><i>✦</i> Подписка</button>
       <button class="side-link" data-view="download"><i>↓</i> Клиент</button>
       <button class="side-link" data-view="security"><i>⛨</i> Безопасность</button>
       <button class="side-link" data-view="support"><i>?</i> Поддержка</button>
@@ -79,30 +78,8 @@
               <div><h3>Лоадер FluxVisuals</h3><p>Windows · exe · около 65 МБ</p></div>
               <button class="btn btn-primary btn-sm" onclick="goView('download')">Открыть</button>
             </div>
-            <div class="panel" style="background:rgba(0,0,0,.15)">
-              <div class="panel-body" id="noAccessSection">
-                <div class="notice" style="margin-bottom:14px"><b>Доступа нет.</b> Выбери тариф, чтобы скачать клиент и играть.</div>
-                <button class="btn btn-soft btn-block" onclick="goView('access')">Посмотреть тарифы</button>
-              </div>
-            </div>
             <button class="btn btn-ghost btn-block" onclick="goView('security')">Сменить пароль</button>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Подписка -->
-    <section class="view" id="view-access" hidden>
-      <div class="view-head">
-        <h1>Подписка</h1>
-        <p>Тарифы и способ оплаты. Доступ появится в кабинете после подтверждения платежа.</p>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><h3>Доступные тарифы</h3></div>
-        <div class="panel-body">
-          <div id="payStatus"></div>
-          <div class="mini-plans" id="buyPlans"><div style="color:var(--dim);font-size:13px">Загрузка…</div></div>
-          <div class="mini-plans" id="miniPlans" style="display:none"></div>
         </div>
       </div>
     </section>
@@ -116,16 +93,10 @@
       <div class="panel">
         <div class="panel-head"><h3>Скачивание</h3></div>
         <div class="panel-body">
-          <div id="downloadSection">
-            <div class="download-box">
-              <div class="file-icon">↓</div>
-              <div><h3>FluxVisualsLoader.exe</h3><p id="dlHint">Windows · около 65 МБ</p></div>
-              <button class="btn btn-primary" id="dlBtn" onclick="downloadLoader()">Скачать лоадер</button>
-            </div>
-          </div>
-          <div id="noAccessDownload" style="display:none">
-            <div class="notice"><b>Доступа нет.</b> Купи тариф, чтобы скачать лоадер.</div>
-            <button class="btn btn-soft" style="margin-top:14px" onclick="goView('access')">Выбрать тариф</button>
+          <div class="download-box">
+            <div class="file-icon">↓</div>
+            <div><h3>FluxVisualsLoader.exe</h3><p id="dlHint">Windows · около 65 МБ</p></div>
+            <button class="btn btn-primary" id="dlBtn" onclick="downloadLoader()">Скачать лоадер</button>
           </div>
         </div>
       </div>
@@ -169,22 +140,10 @@
   </div>
 </div>
 
-<!-- Оплата -->
-<div class="pay-modal" id="payModal">
-  <div class="pay-box">
-    <h3>Ожидание оплаты</h3>
-    <p>Перейди к оплате и дождись подтверждения. Доступ в кабинете обновится сам.</p>
-    <a class="btn btn-primary btn-block btn-lg" id="payLink" href="#" target="_blank">Перейти к оплате</a>
-    <div class="spinner"></div>
-    <button class="btn btn-ghost btn-block" style="margin-top:16px" onclick="closePayModal()">Закрыть</button>
-  </div>
-</div>
-
 <script src="/js/site.js?v=3"></script>
 <script>
   let me = null;
-  let pollTimer = null;
-  const viewTitles = { overview: 'Обзор', access: 'Подписка', download: 'Клиент', security: 'Безопасность', support: 'Поддержка' };
+  const viewTitles = { overview: 'Обзор', download: 'Клиент', security: 'Безопасность', support: 'Поддержка' };
 
   function goView(name) {
     const btn = document.querySelector('.side-link[data-view="' + name + '"]');
@@ -201,10 +160,16 @@
     });
   });
 
+  function roleName(role) {
+    if (role === 'admin') return 'Администратор';
+    if (role === 'free') return 'Free';
+    if (role === 'client') return 'Клиент';
+    return 'Без доступа';
+  }
+
   function roleBadge(role) {
-    if (role === 'admin') return '<span class="chip ac">Администратор</span>';
-    if (role === 'client') return '<span class="chip ok">Клиент</span>';
-    return '<span class="chip">Пользователь</span>';
+    const cls = role === 'admin' ? 'ac' : (role === 'free' || role === 'client') ? 'ok' : '';
+    return '<span class="chip ' + cls + '">' + roleName(role) + '</span>';
   }
 
   async function loadAccount() {
@@ -222,64 +187,15 @@
     ['profileAvatar', 'sideAvatar', 'topAvatar'].forEach(id => document.getElementById(id).textContent = initial);
     document.getElementById('roleBadge').outerHTML = roleBadge(me.role).replace('class="chip', 'id="roleBadge" class="chip');
     document.getElementById('uidText').textContent = me.uid ?? '—';
-    document.getElementById('roleText').textContent = me.role === 'admin' ? 'Администратор' : me.role === 'client' ? 'Клиент' : 'Пользователь';
+    document.getElementById('roleText').textContent = roleName(me.role);
     document.getElementById('hwidText').textContent = me.hwid ? 'Привязан' : 'Не привязан';
-    document.getElementById('expiryText').textContent = me.accessExpiresAt
-      ? fmtDate(me.accessExpiresAt)
-      : (me.role === 'client' || me.role === 'admin' ? 'Пожизненно' : '—');
+    document.getElementById('expiryText').textContent = me.role === 'free'
+      ? 'Без срока'
+      : me.accessExpiresAt
+        ? fmtDate(me.accessExpiresAt)
+        : (me.role === 'client' || me.role === 'admin' ? 'Пожизненно' : '—');
 
     if (me.role === 'admin') document.getElementById('adminLink').style.display = 'block';
-    const on = !!me.hasAccess;
-    document.getElementById('downloadSection').style.display = on ? 'block' : 'none';
-    document.getElementById('noAccessDownload').style.display = on ? 'none' : 'block';
-    document.getElementById('noAccessSection').style.display = on ? 'none' : 'block';
-    loadPlans();
-  }
-
-  async function loadPlans() {
-    const { res, data } = await apiJson('/account/plans');
-    if (!res.ok || !data) return;
-    document.getElementById('miniPlans').innerHTML = data.map(p => `
-      <div class="mini-plan">
-        <div><b>${esc(p.name)}</b><br><small>${p.lifetime ? 'Навсегда' : p.days + ' дней'}</small></div>
-        <button class="btn btn-primary btn-sm" onclick="buy('${esc(p.id)}')">${p.price} ₽</button>
-      </div>`).join('');
-    document.getElementById('buyPlans').innerHTML = data.map(p => `
-      <div class="mini-plan">
-        <div><b>${esc(p.name)}</b><br><small>${esc(p.description || (p.lifetime ? 'Навсегда' : p.days + ' дней'))}</small></div>
-        <button class="btn btn-primary btn-sm" onclick="buy('${esc(p.id)}')">Купить · ${p.price} ₽</button>
-      </div>`).join('');
-  }
-
-  async function buy(planId) {
-    const { res, data } = await apiJson('/payment/create', {
-      method: 'POST',
-      body: JSON.stringify({ planId })
-    });
-    const st = document.getElementById('payStatus');
-    if (!res.ok) {
-      st.innerHTML = '<div class="notice"><b>Оплата недоступна.</b> ' + esc(data?.error || 'Ошибка') + '</div>';
-      return;
-    }
-    document.getElementById('payLink').href = data.payUrl;
-    document.getElementById('payModal').classList.add('show');
-    startPolling(data.orderId);
-  }
-
-  function startPolling(orderId) {
-    clearInterval(pollTimer);
-    pollTimer = setInterval(async () => {
-      const { res, data } = await apiJson('/payment/status/' + orderId);
-      if (res.ok && data.status === 'paid') {
-        clearInterval(pollTimer);
-        closePayModal();
-        location.reload();
-      }
-    }, 3000);
-  }
-
-  function closePayModal() {
-    document.getElementById('payModal').classList.remove('show');
   }
 
   async function downloadLoader() {

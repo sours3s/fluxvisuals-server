@@ -235,6 +235,8 @@ using (var scope = app.Services.CreateScope())
     try { db.Database.ExecuteSqlRaw("ALTER TABLE \"Users\" ADD COLUMN \"Uid\" INTEGER NULL"); } catch { }
     try { db.Database.ExecuteSqlRaw("ALTER TABLE \"AppSettings\" ADD COLUMN \"LoaderDownloadUrl\" text NULL"); } catch { }
     try { db.Database.ExecuteSqlRaw("UPDATE \"Users\" SET \"Uid\" = \"Id\" WHERE \"Uid\" IS NULL"); } catch { }
+    // Клиент стал бесплатным: старые обычные аккаунты тоже получают роль free.
+    try { db.Database.ExecuteSqlRaw("UPDATE \"Users\" SET \"Role\" = 'free', \"AccessExpiresAt\" = NULL WHERE \"Role\" = 'user'"); } catch { }
 
     // Сид настроек: HasData применяется только миграциями, а мы схему Creating вручную.
     if (!await db.AppSettings.AnyAsync())

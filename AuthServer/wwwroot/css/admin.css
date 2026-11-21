@@ -126,6 +126,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .badge-inactive { color: var(--err); border-color: rgba(255, 107, 122, .3); background: rgba(255, 107, 122, .08); }
 .badge-admin { color: var(--ac-light); border-color: var(--ac-line); background: var(--ac-soft); }
 .badge-client { color: var(--ok); border-color: rgba(94, 224, 160, .3); background: rgba(94, 224, 160, .08); }
+.badge-free { color: var(--info); border-color: rgba(111, 182, 255, .3); background: rgba(111, 182, 255, .08); }
 .badge-hwid { color: var(--warn); border-color: rgba(240, 198, 116, .3); background: rgba(240, 198, 116, .08); }
 .text-muted { color: var(--dim); }
 .actions { display: flex; gap: 6px; }
