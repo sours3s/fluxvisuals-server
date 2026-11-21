@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/style.css?v=2">
+<link rel="stylesheet" href="/css/style.css?v=3">
 </head>
 <body>
 <div class="site-glow"></div>
@@ -27,6 +27,7 @@
       <button class="side-link" data-view="access"><i>✦</i> Подписка</button>
       <button class="side-link" data-view="download"><i>↓</i> Клиент</button>
       <button class="side-link" data-view="security"><i>⛨</i> Безопасность</button>
+      <button class="side-link" data-view="support"><i>?</i> Поддержка</button>
     </nav>
     <div class="side-foot">
       <a class="btn btn-soft btn-sm btn-block" href="/admin/" id="adminLink" style="display:none">Админ-панель</a>
@@ -38,7 +39,6 @@
     <header class="app-top">
       <div class="crumb">Кабинет / <b id="crumbCurrent">Обзор</b></div>
       <div class="top-right">
-        <span id="topStatus">Проверка доступа…</span>
         <div class="avatar" id="topAvatar">F</div>
       </div>
     </header>
@@ -47,7 +47,7 @@
     <section class="view" id="view-overview">
       <div class="view-head">
         <h1>Привет, <span id="acctName">…</span></h1>
-        <p>Коротко о твоём аккаунте и доступе.</p>
+        <p>Коротко об аккаунте и доступных действиях.</p>
       </div>
 
       <div class="profile-hero">
@@ -60,16 +60,14 @@
 
       <div class="cards-2">
         <div class="panel">
-          <div class="panel-head"><h3>Статус доступа</h3></div>
+          <div class="panel-head"><h3>Аккаунт</h3></div>
           <div class="panel-body">
             <dl class="kv">
               <div><dt>UID</dt><dd id="uidText">—</dd></div>
               <div><dt>Роль</dt><dd id="roleText">—</dd></div>
-              <div><dt>Доступ</dt><dd id="accessText">—</dd></div>
               <div><dt>Действует до</dt><dd id="expiryText">—</dd></div>
               <div><dt>HWID</dt><dd id="hwidText">—</dd></div>
             </dl>
-            <div class="status-box" id="statusBox"><span class="dot" id="statusDot"></span><span id="statusText">Проверка…</span></div>
           </div>
         </div>
 
@@ -97,10 +95,10 @@
     <section class="view" id="view-access" hidden>
       <div class="view-head">
         <h1>Подписка</h1>
-        <p>Тарифы и способ оплаты. Доступ включается после подтверждения платежа.</p>
+        <p>Тарифы и способ оплаты. Доступ появится в кабинете после подтверждения платежа.</p>
       </div>
       <div class="panel">
-        <div class="panel-head"><h3>Доступные тарифы</h3><span class="chip" id="accessChip">—</span></div>
+        <div class="panel-head"><h3>Доступные тарифы</h3></div>
         <div class="panel-body">
           <div id="payStatus"></div>
           <div class="mini-plans" id="buyPlans"><div style="color:var(--dim);font-size:13px">Загрузка…</div></div>
@@ -113,7 +111,7 @@
     <section class="view" id="view-download" hidden>
       <div class="view-head">
         <h1>Клиент</h1>
-        <p>Лоадер скачивается с сайта. Установка не нужна — распакуй и запусти exe.</p>
+        <p>Лоадер скачивается с сайта. Установка не нужна, распакуй и запусти exe.</p>
       </div>
       <div class="panel">
         <div class="panel-head"><h3>Скачивание</h3></div>
@@ -152,6 +150,22 @@
         </div>
       </div>
     </section>
+
+    <!-- Поддержка -->
+    <section class="view" id="view-support" hidden>
+      <div class="view-head">
+        <h1>Поддержка</h1>
+        <p>Напиши в Discord, если лоадер не пускает, мод не запускается или нужно сбросить HWID.</p>
+      </div>
+      <div class="panel" style="max-width:640px">
+        <div class="panel-head"><h3>Связаться с нами</h3></div>
+        <div class="panel-body stack">
+          <p style="color:var(--muted);line-height:1.65;margin:0">Укажи логин, UID и коротко опиши, что сделал перед ошибкой. Для проблем с запуском приложи лог из папки игры. Так ответ будет быстрее.</p>
+          <a class="btn btn-primary btn-block" href="https://discord.gg/HScqNfYcca" target="_blank" rel="noopener">Открыть Discord</a>
+          <div class="notice">Не отправляй пароль в чат. Его хватит только для входа на сайте и в лоадер.</div>
+        </div>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -166,11 +180,11 @@
   </div>
 </div>
 
-<script src="/js/site.js?v=2"></script>
+<script src="/js/site.js?v=3"></script>
 <script>
   let me = null;
   let pollTimer = null;
-  const viewTitles = { overview: 'Обзор', access: 'Подписка', download: 'Клиент', security: 'Безопасность' };
+  const viewTitles = { overview: 'Обзор', access: 'Подписка', download: 'Клиент', security: 'Безопасность', support: 'Поддержка' };
 
   function goView(name) {
     const btn = document.querySelector('.side-link[data-view="' + name + '"]');
@@ -210,20 +224,12 @@
     document.getElementById('uidText').textContent = me.uid ?? '—';
     document.getElementById('roleText').textContent = me.role === 'admin' ? 'Администратор' : me.role === 'client' ? 'Клиент' : 'Пользователь';
     document.getElementById('hwidText').textContent = me.hwid ? 'Привязан' : 'Не привязан';
-
-    const on = !!me.hasAccess;
-    const box = document.getElementById('statusBox');
-    box.className = on ? 'status-box' : 'status-box no';
-    document.getElementById('statusText').textContent = on ? 'Доступ активен' : 'Доступа нет';
-    document.getElementById('topStatus').textContent = on ? 'Доступ активен' : 'Доступа нет';
-    document.getElementById('accessChip').className = on ? 'chip ok' : 'chip off';
-    document.getElementById('accessChip').textContent = on ? 'Активен' : 'Нет доступа';
-    document.getElementById('accessText').textContent = on ? 'Активен' : (me.role === 'client' ? 'Истёк' : 'Нет');
     document.getElementById('expiryText').textContent = me.accessExpiresAt
       ? fmtDate(me.accessExpiresAt)
       : (me.role === 'client' || me.role === 'admin' ? 'Пожизненно' : '—');
 
     if (me.role === 'admin') document.getElementById('adminLink').style.display = 'block';
+    const on = !!me.hasAccess;
     document.getElementById('downloadSection').style.display = on ? 'block' : 'none';
     document.getElementById('noAccessDownload').style.display = on ? 'none' : 'block';
     document.getElementById('noAccessSection').style.display = on ? 'none' : 'block';

@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FluxVisuals — клиент для Minecraft 1.21.11</title>
-<meta name="description" content="FluxVisuals добавляет кейфреймы, сглаживание и визуальные эффекты в Minecraft 1.21.11. Работает поверх игры, не меняет игровые пакеты.">
+<meta name="description" content="FluxVisuals для Minecraft 1.21.11 на Fabric: Keystrokes, Better F3, Dynamic Lights, Block Outline и другие модули. Всё включается в ClickGUI.">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/style.css?v=2">
+<link rel="stylesheet" href="/css/style.css?v=3">
 </head>
 <body>
 <div class="site-glow"></div>
@@ -22,7 +22,7 @@
       <a class="nav-link hide-sm" href="#features">Возможности</a>
       <a class="nav-link hide-sm" href="#pricing">Тарифы</a>
       <a class="nav-link hide-sm" href="#how">Как начать</a>
-      <a class="nav-link hide-sm" href="#faq">Вопросы</a>
+      <a class="nav-link hide-sm" href="#support">Поддержка</a>
     </nav>
     <div class="nav-actions" id="navActions"></div>
   </div>
@@ -32,9 +32,9 @@
   <section class="hero">
     <div class="hero-grid">
       <div class="hero-copy">
-        <div class="eyebrow"><span class="live-dot"></span> Minecraft 1.21.11 · Fabric</div>
+        <div class="eyebrow">Minecraft 1.21.11 · Fabric</div>
         <h1>Красивая картинка.<br><span class="accent">Ровный FPS.</span></h1>
-        <p class="hero-lead">FluxVisuals добавляет кейфреймы, сглаживание и визуальные эффекты поверх игры. Игровые пакеты остаются нетронутыми.</p>
+        <p class="hero-lead">Оверлеи, подсветка блоков, камера и свет. Модули включаются по отдельности в ClickGUI и настраиваются там же.</p>
         <div class="hero-actions">
           <a class="btn btn-primary btn-lg" href="/register.html">Скачать клиент</a>
           <a class="btn btn-ghost btn-lg" href="#pricing">Посмотреть тарифы</a>
@@ -47,42 +47,31 @@
           <div class="mock-bar">
             <span class="dots"><i></i><i></i><i></i></span>
             <span class="mock-title">FluxVisuals · ClickGUI</span>
-            <span class="mock-ver">v1.0.17</span>
+            <span class="mock-ver">clickgui</span>
           </div>
           <div class="mock-body">
             <div class="mock-side">
               <div class="mock-search">⌕ Поиск модуля</div>
-              <button class="mock-item"><span>✦</span> Кейфреймы <em>ON</em></button>
-              <button class="mock-item active"><span>◐</span> Сглаживание <em>ON</em></button>
-              <button class="mock-item"><span>❖</span> Визуалы <em>ON</em></button>
-              <button class="mock-item"><span>⚡</span> Оптимизация <em>ON</em></button>
-              <button class="mock-item"><span>▦</span> Интерфейс <em>ON</em></button>
-              <button class="mock-item"><span>⛓</span> Безопасность</button>
+              <div class="mock-sub">Категории</div>
+              <div class="mock-cats" id="mockCats">
+                <button class="mock-cat active" data-cat="Visuals">Visuals</button>
+                <button class="mock-cat" data-cat="Utils">Utils</button>
+                <button class="mock-cat" data-cat="Configs">Configs</button>
+                <button class="mock-cat" data-cat="Friends">Friends</button>
+                <button class="mock-cat" data-cat="Cosmetics">Cosmetics</button>
+              </div>
+              <div class="mock-sub" id="mockModsLabel">Модули</div>
+              <div class="mock-mods" id="mockMods"></div>
             </div>
             <div class="mock-main">
-              <div class="mock-heading"><b>Сглаживание</b><span class="switch on"></span></div>
-              <p class="mock-desc">Плавное движение камеры и анимация настроек.</p>
-              <div class="mock-row"><span class="mock-label">Скорость</span><span class="track"><i style="width:64%"></i></span><span class="mock-val">0.64</span></div>
-              <div class="mock-row"><span class="mock-label">Плавность</span><span class="track"><i style="width:82%"></i></span><span class="mock-val">0.82</span></div>
-              <div class="mock-row"><span class="mock-label">Затухание</span><span class="track"><i style="width:45%"></i></span><span class="mock-val">0.45</span></div>
-              <div class="mock-chips">
-                <span class="mock-chip on">Камера</span>
-                <span class="mock-chip on">GUI</span>
-                <span class="mock-chip">Хотбар</span>
-                <span class="mock-chip on">Эффекты</span>
-              </div>
+              <div class="mock-heading"><b id="mockName">Keystrokes</b><span class="switch on"></span></div>
+              <p class="mock-desc" id="mockDesc"></p>
+              <div class="mock-settings" id="mockSettings"></div>
             </div>
           </div>
-          <div class="mock-foot"><span>fluxvisuals / client</span><span>fabric 1.21.11 · 60 fps</span></div>
+          <div class="mock-foot"><span>fluxvisuals / client</span><span>fabric 1.21.11</span></div>
         </div>
       </div>
-    </div>
-
-    <div class="stats">
-      <div class="stat"><b>2 480</b><span>игроков</span></div>
-      <div class="stat"><b>31 700</b><span>запусков</span></div>
-      <div class="stat"><b>74</b><span>обновления</span></div>
-      <div class="stat"><b>1.0.17</b><span>актуальная версия</span></div>
     </div>
   </section>
 
@@ -90,16 +79,16 @@
     <div class="wrap">
       <div class="section-head">
         <div class="section-kicker">Возможности</div>
-        <h2>Что внутри FluxVisuals</h2>
-        <p>Собрали то, что применяется в игре каждый день. Каждый модуль включается отдельно и настраивается под себя.</p>
+        <h2>Модули, которые есть в клиенте</h2>
+        <p>Названия и настройки взяты из самой сборки. Каждый пункт можно включить отдельно и не трогать остальные.</p>
       </div>
       <div class="grid-3">
-        <div class="feature"><div class="feature-ic">✦</div><h3>Кейфреймы</h3><p>Векторные линии, редактор точек спавна и свободная камера.</p></div>
-        <div class="feature"><div class="feature-ic">◐</div><h3>Сглаживание</h3><p>Плавное движение без просадок. Настраивается под любую сборку.</p></div>
-        <div class="feature"><div class="feature-ic">❖</div><h3>Визуалы</h3><p>Траектории, таргеты, нан-блоки и контрастные материалы.</p></div>
-        <div class="feature"><div class="feature-ic">⚡</div><h3>Оптимизация</h3><p>Меньше просадок на слабых ПК. Рендер разгружается там, где он тормозит.</p></div>
-        <div class="feature"><div class="feature-ic">⛓</div><h3>Защита HWID</h3><p>Аккаунт привязан к компьютеру. Доступ не передаётся другому человеку.</p></div>
-        <div class="feature"><div class="feature-ic">↻</div><h3>Обновления</h3><p>Лоадер проверяет версию при запуске и докачивает мод сам.</p></div>
+        <div class="feature"><div class="feature-ic">✦</div><h3>ESP</h3><p>Подсвечивает игроков и мобов в прямой видимости. Цели выбираются в настройках.</p></div>
+        <div class="feature"><div class="feature-ic">⌨</div><h3>Keystrokes</h3><p>Показывает нажатия WASD, мыши, пробела и шифта. Два стиля индикаторов: Dark и Glass.</p></div>
+        <div class="feature"><div class="feature-ic">▤</div><h3>Better F3</h3><p>Чистый оверлей вместо стандартного экрана отладки. Координаты, FPS, пинг и память.</p></div>
+        <div class="feature"><div class="feature-ic">☀</div><h3>Dynamic Lights</h3><p>Свет от факелов, горящих сущностей и предметов в руке. Радиус и сила настраиваются.</p></div>
+        <div class="feature"><div class="feature-ic">◫</div><h3>Block Outline</h3><p>Контур или оверлей на целевом блоке. Цвет, прозрачность и скорость анимации.</p></div>
+        <div class="feature"><div class="feature-ic">◐</div><h3>CameraCustomer</h3><p>Зум, FOV, аспект, тряска и сглаживание камеры. Всё в одном модуле.</p></div>
       </div>
     </div>
   </section>
@@ -139,9 +128,22 @@
       <div class="faq-list">
         <details class="faq-item"><summary>Можно ли получить бан за клиент?</summary><p>Клиент не отправляет игровые пакеты от твоего имени. Он рисует поверх игры и меняет только клиентскую картинку.</p></details>
         <details class="faq-item"><summary>Как оплатить доступ?</summary><p>Криптовалютой. После подтверждения сети статус в кабинете обновится без твоих действий.</p></details>
-        <details class="faq-item"><summary>Можно ли сменить компьютер?</summary><p>Доступ привязан к HWID. Для сброса привязки напиши администратору.</p></details>
+        <details class="faq-item"><summary>Можно ли сменить компьютер?</summary><p>Доступ привязан к HWID. Для сброса привязки напиши в поддержку.</p></details>
         <details class="faq-item"><summary>Сколько весит клиент?</summary><p>Лоадер около 65 МБ. Мод и библиотеки скачиваются при первом запуске, дальше запуск быстрый.</p></details>
-        <details class="faq-item"><summary>Лоадер не видит доступ после покупки</summary><p>Перезапусти лоадер и войди заново. Если статус в кабинете активен, а вход не проходит — обратись в поддержку.</p></details>
+        <details class="faq-item"><summary>Лоадер не видит доступ после покупки</summary><p>Перезапусти лоадер и войди заново. Если вход всё равно не проходит, напиши в поддержку и укажи свой логин.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="support">
+    <div class="wrap">
+      <div class="support-card">
+        <div>
+          <div class="section-kicker">Поддержка</div>
+          <h2>Что-то не работает?</h2>
+          <p>Напиши в Discord. Укажи логин, версию клиента и что ты делал перед ошибкой. Так разобраться получится быстрее.</p>
+        </div>
+        <a class="btn btn-primary btn-lg" href="https://discord.gg/HScqNfYcca" target="_blank" rel="noopener">Открыть Discord</a>
       </div>
     </div>
   </section>
@@ -153,20 +155,130 @@
       <a class="brand" href="/"><span class="brand-mark">F</span><span class="brand-text">FLUX<span>VISUALS</span></span></a>
       <p>Клиент для Minecraft 1.21.11 на Fabric. Не является продуктом Mojang.</p>
     </div>
-    <div class="foot-col"><h4>Сайт</h4><a href="#features">Возможности</a><a href="#pricing">Тарифы</a><a href="#faq">Вопросы</a></div>
+    <div class="foot-col"><h4>Сайт</h4><a href="#features">Возможности</a><a href="#pricing">Тарифы</a><a href="#support">Поддержка</a></div>
     <div class="foot-col"><h4>Кабинет</h4><a href="/login.html">Войти</a><a href="/register.html">Регистрация</a><a href="/account.html">Мой аккаунт</a></div>
-    <div class="foot-col"><h4>Информация</h4><a href="#how">Как начать</a><span style="color:var(--dim);font-size:13px;display:block;padding:4px 0">Minecraft 1.21.11</span><span style="color:var(--dim);font-size:13px;display:block;padding:4px 0">Fabric Loader</span></div>
+    <div class="foot-col"><h4>Информация</h4><a href="#how">Как начать</a><a href="#faq">Вопросы</a><span style="color:var(--dim);font-size:13px;display:block;padding:4px 0">Minecraft 1.21.11</span><span style="color:var(--dim);font-size:13px;display:block;padding:4px 0">Fabric Loader</span></div>
   </div>
   <div class="foot-bottom"><span>© 2026 FluxVisuals</span><span>Сделано для игры, а не для рекламы</span></div>
 </footer>
 
-<script src="/js/site.js?v=2"></script>
+<script src="/js/site.js?v=3"></script>
 <script>
   initNav('home');
 
+  const mockData = {
+    Visuals: {
+      modules: [
+        { name: 'Keystrokes', desc: 'Показывает нажатия клавиш WASD, мыши и пробела', settings: [
+          { label: 'Style', type: 'mode', value: 'Dark' },
+          { label: 'Show Mouse', type: 'bool', value: true },
+          { label: 'Show Space', type: 'bool', value: true },
+          { label: 'Show Sprint', type: 'bool', value: false },
+          { label: 'Key Size', type: 'range', value: 1.0, min: 0.5, max: 2.0 },
+          { label: 'Spacing', type: 'range', value: 3.0, min: 1.0, max: 8.0 }
+        ]},
+        { name: 'Smooth Camera', desc: 'Добавляет камере от первого лица плавность движения', settings: [
+          { label: 'Delay', type: 'range', value: 5.0, min: 5.0, max: 50.0 }
+        ]},
+        { name: 'Block Outline', desc: 'Подсветка целевого блока: контур или плазма-оверлей', settings: [
+          { label: 'Mode', type: 'mode', value: 'Both' },
+          { label: 'Fill', type: 'bool', value: false },
+          { label: 'Alpha', type: 'range', value: 130, min: 40, max: 220 },
+          { label: 'Speed', type: 'range', value: 1.0, min: 0.2, max: 3.0 }
+        ]},
+        { name: 'Dynamic Lights', desc: 'Динамическое освещение от факелов и горящих сущностей', settings: [
+          { label: 'Radius', type: 'range', value: 8, min: 3, max: 15 },
+          { label: 'Strength', type: 'range', value: 1.0, min: 0.3, max: 2.0 },
+          { label: 'Held Items', type: 'bool', value: true },
+          { label: 'Burning Entities', type: 'bool', value: true }
+        ]},
+        { name: 'Attack Distance Indicator', desc: 'Показывает расстояние до цели в цифрах под прицелом', settings: [
+          { label: 'Display Mode', type: 'mode', value: 'Numeric' },
+          { label: 'Text Size', type: 'range', value: 12, min: 8, max: 20 },
+          { label: 'Y Offset', type: 'range', value: 18, min: 0, max: 50 },
+          { label: 'Only on target', type: 'bool', value: true },
+          { label: 'Show Max Reach', type: 'bool', value: false }
+        ]},
+        { name: 'Motion Blur', desc: 'Плавный эффект размытия движения', settings: [
+          { label: 'Strength', type: 'range', value: 0.5, min: 0.1, max: 1.5 }
+        ]}
+      ]
+    },
+    Utils: {
+      modules: [
+        { name: 'Better F3', desc: 'Замена стандартного экрана отладки F3 на чистый оверлей', settings: [
+          { label: 'Coords', type: 'bool', value: true },
+          { label: 'FPS', type: 'bool', value: true },
+          { label: 'Direction', type: 'bool', value: true },
+          { label: 'Ping', type: 'bool', value: true },
+          { label: 'Entities', type: 'bool', value: true },
+          { label: 'Memory', type: 'bool', value: true },
+          { label: 'Position', type: 'mode', value: 'Left' }
+        ]},
+        { name: 'AppleSkin', desc: 'Показывает насыщение и предпросмотр восстановления на еде', settings: [
+          { label: 'Show Saturation', type: 'bool', value: true },
+          { label: 'Show Exhaustion', type: 'bool', value: false }
+        ]},
+        { name: 'Discord RPC', desc: 'Показывает активность FluxVisuals в Discord (с кнопкой на сервер)', settings: [] }
+      ]
+    },
+    Configs: { note: 'Вкладка GUI для конфигов: сохранение, загрузка, список, удаление, экспорт и импорт. Отдельных модулей здесь нет.' },
+    Friends: { note: 'Список друзей. Друзья получают зелёный ESP, тег [F] и защиту от френдли-файра.' },
+    Cosmetics: { note: 'Шляпа, крылья и след за игроком. Включаются в модуле Cosmetic, который лежит в Visuals.' }
+  };
+
+  let activeCat = 'Visuals';
+
+  function renderMockMods() {
+    const box = document.getElementById('mockMods');
+    const cat = mockData[activeCat];
+    document.getElementById('mockModsLabel').textContent = cat.modules ? 'Модули' : 'Раздел';
+    box.innerHTML = cat.modules
+      ? cat.modules.map((m, i) => '<button class="mock-item' + (i === 0 ? ' active' : '') + '" data-mod="' + i + '">' + esc(m.name) + '</button>').join('')
+      : '<div class="mock-note">' + esc(cat.note) + '</div>';
+    box.querySelectorAll('[data-mod]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        box.querySelectorAll('.mock-item').forEach(x => x.classList.remove('active'));
+        btn.classList.add('active');
+        renderMockSettings(cat.modules[Number(btn.dataset.mod)]);
+      });
+    });
+    if (cat.modules) renderMockSettings(cat.modules[0]);
+  }
+
+  function renderMockSettings(mod) {
+    document.getElementById('mockName').textContent = mod.name;
+    document.getElementById('mockDesc').textContent = mod.desc;
+    const box = document.getElementById('mockSettings');
+    if (!mod.settings.length) {
+      box.innerHTML = '<div class="mock-note">У модуля нет дополнительных настроек.</div>';
+      return;
+    }
+    box.innerHTML = mod.settings.map(s => {
+      if (s.type === 'bool') {
+        return '<div class="mock-row"><span class="mock-label">' + esc(s.label) + '</span><span class="mock-toggle' + (s.value ? ' on' : '') + '"></span></div>';
+      }
+      if (s.type === 'mode') {
+        return '<div class="mock-row"><span class="mock-label">' + esc(s.label) + '</span><span class="mock-mode">' + esc(s.value) + '</span></div>';
+      }
+      const pct = Math.round((s.value - s.min) / (s.max - s.min) * 100);
+      return '<div class="mock-row"><span class="mock-label">' + esc(s.label) + '</span><span class="track"><i style="width:' + pct + '%"></i></span><span class="mock-val">' + s.value + '</span></div>';
+    }).join('');
+  }
+
+  document.querySelectorAll('.mock-cat').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mock-cat').forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      activeCat = btn.dataset.cat;
+      renderMockMods();
+    });
+  });
+  renderMockMods();
+
   fetch('/api/account/plans').then(r => r.json()).then(plans => {
     const grid = document.getElementById('plansGrid');
-    grid.innerHTML = plans.map((p, i) => `
+    grid.innerHTML = plans.map(p => `
       <div class="plan ${p.lifetime ? 'featured' : ''}">
         ${p.lifetime ? '<span class="plan-badge">ВЫГОДА</span>' : ''}
         <div class="plan-name">${esc(p.name)}</div>
