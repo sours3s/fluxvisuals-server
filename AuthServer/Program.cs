@@ -239,13 +239,23 @@ using (var scope = app.Services.CreateScope())
     // Клиент стал бесплатным: старые обычные аккаунты один раз получают роль free.
     // Отметка в Migrations нужна, чтобы снятый в админке доступ не вернулся после рестарта.
     db.Database.ExecuteSqlRaw("CREATE TABLE IF NOT EXISTS \"Migrations\" (\"Name\" text NOT NULL PRIMARY KEY, \"AppliedAt\" text NOT NULL)");
-    var freeRoleApplied = db.Database.SqlQueryRaw<long>(
-        "SELECT COUNT(*) AS \"Value\" FROM \"Migrations\" WHERE \"Name\" = 'free-role'").Single() > 0;
-    if (!freeRoleApplied)
+    var conn = db.Database.GetDbConnection();
+    if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
+    using (var check = conn.CreateCommand())
     {
-        db.Database.ExecuteSqlRaw("UPDATE \"Users\" SET \"Role\" = 'free', \"AccessExpiresAt\" = NULL WHERE \"Role\" = 'user'");
-        db.Database.ExecuteSqlRaw("INSERT INTO \"Migrations\" (\"Name\", \"AppliedAt\") VALUES ('free-role', {0})",
-            DateTime.UtcNow.ToString("O"));
+        check.CommandText = "SELECT COUNT(*) FROM \"Migrations\" WHERE \"Name\" = 'free-role'";
+        var freeRoleApplied = Convert.ToInt64(await check.ExecuteScalarAsync()) > 0;
+        if (!freeRoleApplied)
+        {
+            db.Database.ExecuteSqlRaw("UPDATE \"Users\" SET \"Role\" = 'free', \"AccessExpiresAt\" = NULL WHERE \"Role\" = 'user'");
+            using var mark = conn.CreateCommand();
+            mark.CommandText = "INSERT INTO \"Migrations\" (\"Name\", \"AppliedAt\") VALUES ('free-role', @appliedAt)";
+            var param = mark.CreateParameter();
+            param.ParameterName = "@appliedAt";
+            param.Value = DateTime.UtcNow.ToString("O");
+            mark.Parameters.Add(param);
+            await mark.ExecuteNonQueryAsync();
+        }
     }
 
     // Сид настроек: HasData применяется только миграциями, а мы схему Creating вручную.
