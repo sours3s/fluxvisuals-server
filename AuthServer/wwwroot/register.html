@@ -4,36 +4,43 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Регистрация — FluxVisuals</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<div class="bg"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+<div class="site-glow"></div>
+<div class="grid-overlay"></div>
 
-<nav class="nav">
-  <div class="nav-logo"><span class="ic">F</span> FLUX<span style="background:linear-gradient(90deg,#a855f7,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent;">VISUALS</span></div>
-  <div class="nav-links"><a href="/">На главную</a></div>
-</nav>
+<div class="auth-wrap">
+  <aside class="auth-aside">
+    <a class="brand" href="/" style="position:absolute;top:36px;left:clamp(32px,7vw,110px)"><span class="brand-mark">F</span><span class="brand-text">FLUX<span>VISUALS</span></span></a>
+    <h2>Начни с аккаунта.</h2>
+    <p>Он понадобится для покупки доступа, скачивания лоадера и входа в клиент. Занимает меньше минуты.</p>
+    <ul class="auth-perks">
+      <li><i>01</i> Придумай логин и пароль</li>
+      <li><i>02</i> Выбери доступ в кабинете</li>
+      <li><i>03</i> Скачай лоадер и играй</li>
+    </ul>
+  </aside>
 
-<div class="auth-card">
-  <h2>Регистрация</h2>
-  <div class="sub">Создай аккаунт, чтобы купить доступ и скачать клиент</div>
-  <div class="err" id="err"></div>
-  <form id="regForm">
-    <div class="field">
-      <label>Логин (от 3 символов)</label>
-      <input type="text" id="username" minlength="3" maxlength="50" autocomplete="username" required>
+  <div class="auth-side">
+    <div class="auth-card">
+      <h1>Создать аккаунт</h1>
+      <p>Пароль минимум 6 символов. Запомни его — через него будет входить лоадер.</p>
+      <div class="alert" id="err"></div>
+      <form id="regForm">
+        <div class="field"><label for="username">Логин</label><input type="text" id="username" minlength="3" maxlength="50" autocomplete="username" placeholder="От 3 символов" required></div>
+        <div class="field"><label for="password">Пароль</label><input type="password" id="password" minlength="6" autocomplete="new-password" required></div>
+        <div class="field"><label for="password2">Повтори пароль</label><input type="password" id="password2" minlength="6" autocomplete="new-password" required></div>
+        <button class="btn btn-primary btn-block btn-lg" type="submit" id="btn">Создать аккаунт</button>
+      </form>
+      <div class="auth-alt">Уже есть аккаунт? <a href="/login.html">Войти</a></div>
+      <div class="auth-alt" style="margin-top:8px"><a href="/">← На главную</a></div>
     </div>
-    <div class="field">
-      <label>Пароль (минимум 6 символов)</label>
-      <input type="password" id="password" minlength="6" autocomplete="new-password" required>
-    </div>
-    <div class="field">
-      <label>Повтори пароль</label>
-      <input type="password" id="password2" minlength="6" autocomplete="new-password" required>
-    </div>
-    <button class="btn btn-primary btn-block btn-lg" type="submit" id="btn">Создать аккаунт</button>
-  </form>
-  <div class="form-foot">Уже есть аккаунт? <a href="/login.html">Войти</a></div>
+  </div>
 </div>
 
 <script src="/js/site.js"></script>
@@ -41,14 +48,14 @@
   const errBox = document.getElementById('err');
   document.getElementById('regForm').addEventListener('submit', async e => {
     e.preventDefault();
-    errBox.style.display = 'none';
+    errBox.className = 'alert';
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     const password2 = document.getElementById('password2').value;
 
     if (password !== password2) {
       errBox.textContent = 'Пароли не совпадают';
-      errBox.style.display = 'block';
+      errBox.className = 'alert err';
       return;
     }
 
@@ -60,7 +67,6 @@
         body: JSON.stringify({ username, password })
       });
       if (res.ok) {
-        // Сразу входим
         const l = await apiJson('/auth/login', {
           method: 'POST',
           body: JSON.stringify({ username, password })
@@ -70,10 +76,10 @@
         return;
       }
       errBox.textContent = data?.error || 'Не удалось зарегистрироваться';
-      errBox.style.display = 'block';
+      errBox.className = 'alert err';
     } catch (err) {
       errBox.textContent = 'Сервер недоступен. Попробуй ещё раз.';
-      errBox.style.display = 'block';
+      errBox.className = 'alert err';
     }
     btn.disabled = false; btn.textContent = 'Создать аккаунт';
   });

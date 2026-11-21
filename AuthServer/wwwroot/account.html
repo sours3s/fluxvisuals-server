@@ -3,96 +3,166 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Личный кабинет — FluxVisuals</title>
+<title>Кабинет — FluxVisuals</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/style.css">
-<style>
-  .status-line { display:flex; align-items:center; gap:10px; margin-top:12px; }
-  .dot { width:10px; height:10px; border-radius:50%; }
-  .dot.on { background:#22c55e; box-shadow:0 0 8px #22c55e; }
-  .dot.off { background:#f85149; box-shadow:0 0 8px #f85149; }
-  .pay-modal { position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:50; }
-  .pay-modal.show { display:flex; }
-  .pay-box { background:#161b22; border:1px solid #30363d; border-radius:18px; padding:34px; max-width:440px; width:90%; text-align:center; }
-  .pay-box .big { font-size:20px; font-weight:800; margin:12px 0 6px; }
-  .pay-box .sub { color:#8b949e; font-size:14px; margin-bottom:20px; }
-  .spinner { width:34px; height:34px; border:3px solid #30363d; border-top-color:#a855f7; border-radius:50%; animation:spin 1s linear infinite; margin: 10px auto; }
-  @keyframes spin { to { transform:rotate(360deg); } }
-</style>
 </head>
 <body>
-<div class="bg"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+<div class="site-glow"></div>
+<div class="grid-overlay"></div>
 
-<nav class="nav">
-  <div class="nav-logo"><span class="ic">F</span> FLUX<span style="background:linear-gradient(90deg,#a855f7,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent;">VISUALS</span></div>
-  <div class="nav-links" id="navLinks">
-    <a href="/">Главная</a>
-    <button class="btn btn-ghost" onclick="siteLogout()">Выйти</button>
-  </div>
-</nav>
-
-<div class="wrap">
-  <div class="section" style="padding:40px 0 20px;">
-    <h1 class="section-title" style="font-size:26px;">Личный кабинет</h1>
-    <div class="sub" style="color:#8b949e;">Здравствуй, <b id="acctName" style="color:#e6edf3;">…</b></div>
-  </div>
-
-  <div class="acct-grid">
-    <!-- Статус -->
-    <div class="acct-card">
-      <h3>Статус доступа</h3>
-      <div class="row"><span class="k">UID</span><span class="v" id="uidText">—</span></div>
-      <div class="row"><span class="k">Роль</span><span class="v"><span id="roleBadge" class="badge">…</span></span></div>
-      <div class="row"><span class="k">Доступ</span><span class="v" id="accessText">…</span></div>
-      <div class="row"><span class="k">Срок до</span><span class="v" id="expiryText">—</span></div>
-      <div class="row"><span class="k">HWID</span><span class="v" id="hwidText">—</span></div>
-      <div class="status-line"><span class="dot" id="statusDot"></span><span id="statusText">…</span></div>
-      <div style="margin-top:18px;">
-        <a class="btn btn-primary btn-block" href="/admin/" id="adminLink" style="display:none;">Открыть админ-панель</a>
-      </div>
+<div class="app-shell">
+  <aside class="side">
+    <a class="brand" href="/"><span class="brand-mark">F</span><span class="brand-text">FLUX<span>VISUALS</span></span></a>
+    <div class="side-user">
+      <div class="avatar" id="sideAvatar">F</div>
+      <div><b id="sideName">…</b><span id="sideUid">UID —</span></div>
     </div>
+    <div class="side-label">Кабинет</div>
+    <nav class="side-nav">
+      <button class="side-link active" data-view="overview"><i>▦</i> Обзор</button>
+      <button class="side-link" data-view="access"><i>✦</i> Подписка</button>
+      <button class="side-link" data-view="download"><i>↓</i> Клиент</button>
+      <button class="side-link" data-view="security"><i>⛨</i> Безопасность</button>
+    </nav>
+    <div class="side-foot">
+      <a class="btn btn-soft btn-sm btn-block" href="/admin/" id="adminLink" style="display:none">Админ-панель</a>
+      <button class="side-link" onclick="siteLogout()"><i>↪</i> Выйти</button>
+    </div>
+  </aside>
+
+  <div class="app-main">
+    <header class="app-top">
+      <div class="crumb">Кабинет / <b id="crumbCurrent">Обзор</b></div>
+      <div class="top-right">
+        <span id="topStatus">Проверка доступа…</span>
+        <div class="avatar" id="topAvatar">F</div>
+      </div>
+    </header>
+
+    <!-- Обзор -->
+    <section class="view" id="view-overview">
+      <div class="view-head">
+        <h1>Привет, <span id="acctName">…</span></h1>
+        <p>Коротко о твоём аккаунте и доступе.</p>
+      </div>
+
+      <div class="profile-hero">
+        <div class="avatar" id="profileAvatar">F</div>
+        <div>
+          <h2 id="profileName">…</h2>
+          <div class="chips"><span class="chip ac" id="roleBadge">…</span><span class="chip" id="profileUid">UID —</span></div>
+        </div>
+      </div>
+
+      <div class="cards-2">
+        <div class="panel">
+          <div class="panel-head"><h3>Статус доступа</h3></div>
+          <div class="panel-body">
+            <dl class="kv">
+              <div><dt>UID</dt><dd id="uidText">—</dd></div>
+              <div><dt>Роль</dt><dd id="roleText">—</dd></div>
+              <div><dt>Доступ</dt><dd id="accessText">—</dd></div>
+              <div><dt>Действует до</dt><dd id="expiryText">—</dd></div>
+              <div><dt>HWID</dt><dd id="hwidText">—</dd></div>
+            </dl>
+            <div class="status-box" id="statusBox"><span class="dot" id="statusDot"></span><span id="statusText">Проверка…</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Быстрые действия</h3></div>
+          <div class="panel-body stack">
+            <div class="download-box">
+              <div class="file-icon">↓</div>
+              <div><h3>Лоадер FluxVisuals</h3><p>Windows · exe · около 65 МБ</p></div>
+              <button class="btn btn-primary btn-sm" onclick="goView('download')">Открыть</button>
+            </div>
+            <div class="panel" style="background:rgba(0,0,0,.15)">
+              <div class="panel-body" id="noAccessSection">
+                <div class="notice" style="margin-bottom:14px"><b>Доступа нет.</b> Выбери тариф, чтобы скачать клиент и играть.</div>
+                <button class="btn btn-soft btn-block" onclick="goView('access')">Посмотреть тарифы</button>
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-block" onclick="goView('security')">Сменить пароль</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Подписка -->
+    <section class="view" id="view-access" hidden>
+      <div class="view-head">
+        <h1>Подписка</h1>
+        <p>Тарифы и способ оплаты. Доступ включается после подтверждения платежа.</p>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Доступные тарифы</h3><span class="chip" id="accessChip">—</span></div>
+        <div class="panel-body">
+          <div id="payStatus"></div>
+          <div class="mini-plans" id="buyPlans"><div style="color:var(--dim);font-size:13px">Загрузка…</div></div>
+          <div class="mini-plans" id="miniPlans" style="display:none"></div>
+        </div>
+      </div>
+    </section>
 
     <!-- Клиент -->
-    <div class="acct-card">
-      <h3>Клиент</h3>
-      <div id="downloadSection">
-        <button class="btn btn-primary btn-block btn-lg dl-btn" id="dlBtn" onclick="downloadLoader()">⬇ Скачать клиент</button>
-        <div style="font-size:12.5px;color:#8b949e;margin-top:10px;text-align:center;" id="dlHint">Windows · ~65 МБ</div>
+    <section class="view" id="view-download" hidden>
+      <div class="view-head">
+        <h1>Клиент</h1>
+        <p>Лоадер скачивается с сайта. Установка не нужна — распакуй и запусти exe.</p>
       </div>
-      <div id="noAccessSection" style="display:none;">
-        <div class="notice"><b>Нет доступа.</b> Купи клиент ниже, чтобы скачать и играть.</div>
-        <div class="mini-plans" id="miniPlans"></div>
+      <div class="panel">
+        <div class="panel-head"><h3>Скачивание</h3></div>
+        <div class="panel-body">
+          <div id="downloadSection">
+            <div class="download-box">
+              <div class="file-icon">↓</div>
+              <div><h3>FluxVisualsLoader.exe</h3><p id="dlHint">Windows · около 65 МБ</p></div>
+              <button class="btn btn-primary" id="dlBtn" onclick="downloadLoader()">Скачать лоадер</button>
+            </div>
+          </div>
+          <div id="noAccessDownload" style="display:none">
+            <div class="notice"><b>Доступа нет.</b> Купи тариф, чтобы скачать лоадер.</div>
+            <button class="btn btn-soft" style="margin-top:14px" onclick="goView('access')">Выбрать тариф</button>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <!-- Покупка -->
-    <div class="acct-card">
-      <h3>Купить / продлить</h3>
-      <div class="plans" id="buyPlans" style="grid-template-columns:1fr;gap:12px;"><div style="color:#8b949e;">Загрузка…</div></div>
-      <div id="payStatus" style="margin-top:14px;"></div>
-    </div>
+    </section>
 
     <!-- Безопасность -->
-    <div class="acct-card">
-      <h3>Смена пароля</h3>
-      <div class="err" id="pwErr"></div>
-      <div class="ok" id="pwOk"></div>
-      <form id="pwForm">
-        <div class="field"><label>Текущий пароль</label><input type="password" id="curPw" required></div>
-        <div class="field"><label>Новый пароль</label><input type="password" id="newPw" minlength="6" required></div>
-        <button class="btn btn-ghost btn-block" type="submit">Сменить пароль</button>
-      </form>
-    </div>
+    <section class="view" id="view-security" hidden>
+      <div class="view-head">
+        <h1>Безопасность</h1>
+        <p>Пароль от аккаунта используется и на сайте, и в лоадере.</p>
+      </div>
+      <div class="panel" style="max-width:560px">
+        <div class="panel-head"><h3>Смена пароля</h3></div>
+        <div class="panel-body">
+          <div class="alert" id="pwErr"></div>
+          <div class="alert" id="pwOk"></div>
+          <form id="pwForm">
+            <div class="field"><label for="curPw">Текущий пароль</label><input type="password" id="curPw" required></div>
+            <div class="field"><label for="newPw">Новый пароль</label><input type="password" id="newPw" minlength="6" required></div>
+            <div class="form-actions"><button class="btn btn-primary" type="submit">Обновить пароль</button></div>
+          </form>
+        </div>
+      </div>
+    </section>
   </div>
 </div>
 
-<!-- Модалка оплаты -->
+<!-- Оплата -->
 <div class="pay-modal" id="payModal">
   <div class="pay-box">
-    <div class="big">Ожидание оплаты</div>
-    <div class="sub">Оплати счёт и подожди — доступ активируется автоматически. Страница обновится сама.</div>
+    <h3>Ожидание оплаты</h3>
+    <p>Перейди к оплате и дождись подтверждения. Доступ в кабинете обновится сам.</p>
     <a class="btn btn-primary btn-block btn-lg" id="payLink" href="#" target="_blank">Перейти к оплате</a>
     <div class="spinner"></div>
-    <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="closePayModal()">Я уже оплатил</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:16px" onclick="closePayModal()">Закрыть</button>
   </div>
 </div>
 
@@ -100,55 +170,78 @@
 <script>
   let me = null;
   let pollTimer = null;
+  const viewTitles = { overview: 'Обзор', access: 'Подписка', download: 'Клиент', security: 'Безопасность' };
+
+  function goView(name) {
+    const btn = document.querySelector('.side-link[data-view="' + name + '"]');
+    if (btn) btn.click();
+  }
+
+  document.querySelectorAll('.side-link[data-view]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.side-link[data-view]').forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.view').forEach(v => { v.hidden = v.id !== 'view-' + btn.dataset.view; });
+      document.getElementById('crumbCurrent').textContent = viewTitles[btn.dataset.view];
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
 
   function roleBadge(role) {
-    if (role === 'admin') return '<span class="badge badge-admin">Админ</span>';
-    if (role === 'client') return '<span class="badge badge-client">Клиент</span>';
-    return '<span class="badge badge-user">Обычный юзер</span>';
+    if (role === 'admin') return '<span class="chip ac">Администратор</span>';
+    if (role === 'client') return '<span class="chip ok">Клиент</span>';
+    return '<span class="chip">Пользователь</span>';
   }
 
   async function loadAccount() {
     me = await requireAuth();
     if (!me) return;
+    const full = await apiJson('/account/me');
+    if (full.res.ok && full.data) me = { ...me, ...full.data };
+
+    const initial = (me.username || 'F').charAt(0).toUpperCase();
     document.getElementById('acctName').textContent = me.username;
+    document.getElementById('profileName').textContent = me.username;
+    document.getElementById('sideName').textContent = me.username;
+    document.getElementById('sideUid').textContent = 'UID ' + (me.uid ?? '—');
+    document.getElementById('profileUid').textContent = 'UID ' + (me.uid ?? '—');
+    ['profileAvatar', 'sideAvatar', 'topAvatar'].forEach(id => document.getElementById(id).textContent = initial);
+    document.getElementById('roleBadge').outerHTML = roleBadge(me.role).replace('class="chip', 'id="roleBadge" class="chip');
     document.getElementById('uidText').textContent = me.uid ?? '—';
-    document.getElementById('roleBadge').innerHTML = roleBadge(me.role);
+    document.getElementById('roleText').textContent = me.role === 'admin' ? 'Администратор' : me.role === 'client' ? 'Клиент' : 'Пользователь';
     document.getElementById('hwidText').textContent = me.hwid ? 'Привязан' : 'Не привязан';
 
-    const on = me.hasAccess;
-    document.getElementById('statusDot').className = 'dot ' + (on ? 'on' : 'off');
+    const on = !!me.hasAccess;
+    const box = document.getElementById('statusBox');
+    box.className = on ? 'status-box' : 'status-box no';
     document.getElementById('statusText').textContent = on ? 'Доступ активен' : 'Доступа нет';
-    document.getElementById('accessText').textContent = me.role === 'client' || me.role === 'admin' ? (on ? 'Активен' : 'Истёк') : 'Нет';
-    document.getElementById('expiryText').textContent = me.accessExpiresAt ? fmtDate(me.accessExpiresAt) : (me.role === 'client' || me.role === 'admin') ? 'Пожизненно' : '—';
+    document.getElementById('topStatus').textContent = on ? 'Доступ активен' : 'Доступа нет';
+    document.getElementById('accessChip').className = on ? 'chip ok' : 'chip off';
+    document.getElementById('accessChip').textContent = on ? 'Активен' : 'Нет доступа';
+    document.getElementById('accessText').textContent = on ? 'Активен' : (me.role === 'client' ? 'Истёк' : 'Нет');
+    document.getElementById('expiryText').textContent = me.accessExpiresAt
+      ? fmtDate(me.accessExpiresAt)
+      : (me.role === 'client' || me.role === 'admin' ? 'Пожизненно' : '—');
 
     if (me.role === 'admin') document.getElementById('adminLink').style.display = 'block';
-
-    // Секции скачивания / покупки
-    if (on) {
-      document.getElementById('downloadSection').style.display = 'block';
-      document.getElementById('noAccessSection').style.display = 'none';
-    } else {
-      document.getElementById('downloadSection').style.display = 'none';
-      document.getElementById('noAccessSection').style.display = 'block';
-    }
-
+    document.getElementById('downloadSection').style.display = on ? 'block' : 'none';
+    document.getElementById('noAccessDownload').style.display = on ? 'none' : 'block';
+    document.getElementById('noAccessSection').style.display = on ? 'none' : 'block';
     loadPlans();
   }
 
   async function loadPlans() {
     const { res, data } = await apiJson('/account/plans');
     if (!res.ok || !data) return;
-
     document.getElementById('miniPlans').innerHTML = data.map(p => `
       <div class="mini-plan">
-        <div><div class="p-name">${esc(p.name)}</div><div style="font-size:12px;color:#8b949e;">${p.lifetime ? 'Навсегда' : p.days + ' дней'}</div></div>
-        <button class="btn btn-primary" onclick="buy('${esc(p.id)}')">${p.price} ₽</button>
+        <div><b>${esc(p.name)}</b><br><small>${p.lifetime ? 'Навсегда' : p.days + ' дней'}</small></div>
+        <button class="btn btn-primary btn-sm" onclick="buy('${esc(p.id)}')">${p.price} ₽</button>
       </div>`).join('');
-
     document.getElementById('buyPlans').innerHTML = data.map(p => `
       <div class="mini-plan">
-        <div><div class="p-name">${esc(p.name)}</div><div style="font-size:12px;color:#8b949e;">${esc(p.description || '')}</div></div>
-        <button class="btn btn-primary" onclick="buy('${esc(p.id)}')">Купить ${p.price} ₽</button>
+        <div><b>${esc(p.name)}</b><br><small>${esc(p.description || (p.lifetime ? 'Навсегда' : p.days + ' дней'))}</small></div>
+        <button class="btn btn-primary btn-sm" onclick="buy('${esc(p.id)}')">Купить · ${p.price} ₽</button>
       </div>`).join('');
   }
 
@@ -186,7 +279,7 @@
   async function downloadLoader() {
     const btn = document.getElementById('dlBtn');
     btn.disabled = true; btn.textContent = 'Скачивание…';
-    document.getElementById('dlHint').textContent = 'Подготавливаем файл (~65 МБ)…';
+    document.getElementById('dlHint').textContent = 'Подготавливаем файл…';
     try {
       const res = await api('/download/loader');
       if (!res.ok) {
@@ -200,30 +293,33 @@
       a.href = url; a.download = 'FluxVisualsLoader.exe';
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
-      document.getElementById('dlHint').textContent = 'Готово! Скачано через сайт.';
+      document.getElementById('dlHint').textContent = 'Готово. Файл скачан.';
     } catch (e) {
       document.getElementById('dlHint').textContent = 'Ошибка сети. Попробуй ещё раз.';
     } finally {
-      btn.disabled = false; btn.textContent = '⬇ Скачать клиент';
+      btn.disabled = false; btn.textContent = 'Скачать лоадер';
     }
   }
 
-  // Смена пароля
   document.getElementById('pwForm').addEventListener('submit', async e => {
     e.preventDefault();
-    document.getElementById('pwErr').style.display = 'none';
-    document.getElementById('pwOk').style.display = 'none';
+    const err = document.getElementById('pwErr');
+    const ok = document.getElementById('pwOk');
+    err.className = 'alert'; ok.className = 'alert';
     const { res, data } = await apiJson('/account/change-password', {
       method: 'POST',
-      body: JSON.stringify({ currentPassword: document.getElementById('curPw').value, newPassword: document.getElementById('newPw').value })
+      body: JSON.stringify({
+        currentPassword: document.getElementById('curPw').value,
+        newPassword: document.getElementById('newPw').value
+      })
     });
     if (res.ok) {
-      document.getElementById('pwOk').textContent = 'Пароль изменён';
-      document.getElementById('pwOk').style.display = 'block';
+      ok.textContent = 'Пароль изменён.';
+      ok.className = 'alert ok';
       document.getElementById('pwForm').reset();
     } else {
-      document.getElementById('pwErr').textContent = data?.error || 'Ошибка';
-      document.getElementById('pwErr').style.display = 'block';
+      err.textContent = data?.error || 'Не удалось сменить пароль';
+      err.className = 'alert err';
     }
   });
 

@@ -1,512 +1,466 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FluxVisuals Admin Panel</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; }
-        .sidebar { width: 260px; background: #161b22; border-right: 1px solid #30363d; height: 100vh; position: fixed; left: 0; top: 0; padding: 20px; display: flex; flex-direction: column; }
-        .logo { font-size: 1.5rem; font-weight: 700; color: #a855f7; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
-        .nav { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-        .nav a { color: #8b949e; text-decoration: none; padding: 12px 16px; border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
-        .nav a:hover, .nav a.active { background: #21262d; color: #e6edf3; }
-        .main { margin-left: 260px; padding: 30px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .header h1 { font-size: 1.75rem; font-weight: 600; }
-        .user-info { display: flex; align-items: center; gap: 15px; color: #8b949e; }
-        .btn { padding: 10px 20px; border-radius: 6px; border: none; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-        .btn-primary { background: #a855f7; color: white; }
-        .btn-primary:hover { background: #9333ea; }
-        .btn-danger { background: #da3633; color: white; }
-        .btn-danger:hover { background: #f85149; }
-        .btn-secondary { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
-        .btn-secondary:hover { background: #30363d; }
-        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
-        .card h2 { font-size: 1.25rem; margin-bottom: 20px; color: #e6edf3; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
-        .stat { background: #21262d; border: 1px solid #30363d; border-radius: 8px; padding: 20px; }
-        .stat-label { color: #8b949e; font-size: 0.875rem; margin-bottom: 8px; }
-        .stat-value { font-size: 2rem; font-weight: 700; color: #a855f7; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #30363d; }
-        th { color: #8b949e; font-weight: 500; font-size: 0.875rem; text-transform: uppercase; }
-        tr:hover td { background: #21262d; }
-        .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
-        .badge-active { background: #1f6feb22; color: #58a6ff; border: 1px solid #1f6feb44; }
-        .badge-inactive { background: #da363322; color: #f85149; border: 1px solid #da363344; }
-        .badge-admin { background: #a855f722; color: #d8b4fe; border: 1px solid #a855f744; }
-        .badge-client { background: #22c55e22; color: #4ade80; border: 1px solid #22c55e44; }
-        .text-muted { color: #8b949e; }
-        .badge-hwid { background: #d2a10622; color: #e3b341; border: 1px solid #d2a10644; }
-        .actions { display: flex; gap: 8px; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
-        .modal.show { display: flex; }
-        .modal-content { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; width: 100%; max-width: 400px; }
-        .modal h3 { margin-bottom: 20px; }
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; margin-bottom: 6px; color: #8b949e; font-size: 0.875rem; }
-        .form-group input, .form-group select { width: 100%; padding: 10px 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #e6edf3; }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: #a855f7; }
-        .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
-        .empty { text-align: center; color: #8b949e; padding: 40px; }
-        .tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
-        .tab { padding: 10px 16px; background: none; border: none; color: #8b949e; cursor: pointer; border-radius: 6px; font-weight: 500; }
-        .tab.active, .tab:hover { color: #e6edf3; background: #21262d; }
-        .log-entry { font-family: monospace; font-size: 0.8rem; color: #8b949e; padding: 8px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; margin-bottom: 8px; }
-        .log-entry.success { border-color: #1f6feb44; color: #58a6ff; }
-        .log-entry.fail { border-color: #da363344; color: #f85149; }
-        .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 20px; border-radius: 8px; background: #161b22; border: 1px solid #30363d; z-index: 200; display: none; align-items: center; gap: 10px; }
-        .toast.show { display: flex; }
-        .toast.success { border-color: #1f6feb; }
-        .toast.error { border-color: #da3633; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ-панель — FluxVisuals</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/admin.css">
 </head>
 <body>
-    <aside class="sidebar">
-        <div class="logo">🔮 FluxVisuals Admin</div>
-        <nav class="nav">
-            <a href="#" class="active" data-tab="dashboard"><span>📊</span> Dashboard</a>
-            <a href="#" data-tab="users"><span>👥</span> Users</a>
-            <a href="#" data-tab="logs"><span>📋</span> Auth Logs</a>
-            <a href="#" data-tab="settings"><span>⚙️</span> Settings</a>
-        </nav>
-    </aside>
+<div class="admin-shell">
+  <aside class="sidebar">
+    <div class="logo"><span class="mark">F</span><span>FLUXVISUALS<small>Admin panel</small></span></div>
+    <nav class="nav">
+      <a href="#" class="active" data-tab="dashboard"><i>▦</i> Обзор</a>
+      <a href="#" data-tab="users"><i>♙</i> Пользователи</a>
+      <a href="#" data-tab="logs"><i>≡</i> Логи входов</a>
+      <a href="#" data-tab="settings"><i>⚙</i> Настройки</a>
+    </nav>
+    <div class="sidebar-foot"><a href="/account.html">← В личный кабинет</a></div>
+  </aside>
 
-    <main class="main">
-        <header class="header">
-            <h1 id="pageTitle">Dashboard</h1>
-            <div class="user-info">
-                <span id="currentUser">Loading...</span>
-                <button class="btn btn-secondary" onclick="logout()">Logout</button>
-            </div>
-        </header>
+  <main class="main">
+    <header class="header">
+      <h1 id="pageTitle">Обзор</h1>
+      <div class="user-info">
+        <span id="currentUser">Проверка…</span>
+        <span class="user-badge">ADMIN</span>
+        <button class="btn btn-secondary" onclick="logout()">Выйти</button>
+      </div>
+    </header>
 
-        <div id="tab-dashboard" class="tab-content">
-            <div class="stats-grid" id="statsGrid">
-                <div class="stat"><div class="stat-label">Всего юзеров</div><div class="stat-value" id="statTotal">-</div></div>
-                <div class="stat"><div class="stat-label">Админов</div><div class="stat-value" id="statAdmins">-</div></div>
-                <div class="stat"><div class="stat-label">Клиентов</div><div class="stat-value" id="statClients">-</div></div>
-                <div class="stat"><div class="stat-label">Обычных юзеров</div><div class="stat-value" id="statUsers">-</div></div>
-                <div class="stat"><div class="stat-label">С доступом</div><div class="stat-value" id="statWithAccess">-</div></div>
-                <div class="stat"><div class="stat-label">Истёкшие</div><div class="stat-value" id="statExpired">-</div></div>
-                <div class="stat"><div class="stat-label">HWID привязки</div><div class="stat-value" id="statHwid">-</div></div>
-                <div class="stat"><div class="stat-label">Входов (7д)</div><div class="stat-value" id="statLogins">-</div></div>
-            </div>
+    <div class="content">
+      <div id="tab-dashboard" class="tab-content">
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat"><div class="stat-label">Всего пользователей</div><div class="stat-value" id="statTotal">—</div></div>
+          <div class="stat"><div class="stat-label">Админы</div><div class="stat-value" id="statAdmins">—</div></div>
+          <div class="stat"><div class="stat-label">Клиенты</div><div class="stat-value" id="statClients">—</div></div>
+          <div class="stat"><div class="stat-label">Обычные пользователи</div><div class="stat-value" id="statUsers">—</div></div>
+          <div class="stat"><div class="stat-label">С доступом</div><div class="stat-value" id="statWithAccess">—</div></div>
+          <div class="stat"><div class="stat-label">Истёкшие</div><div class="stat-value" id="statExpired">—</div></div>
+          <div class="stat"><div class="stat-label">Привязок HWID</div><div class="stat-value" id="statHwid">—</div></div>
+          <div class="stat"><div class="stat-label">Входов за 7 дней</div><div class="stat-value" id="statLogins">—</div></div>
         </div>
+      </div>
 
-        <div id="tab-users" class="tab-content" style="display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
-                <h2>User Management</h2>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn btn-secondary" onclick="reindexUsers()" title="Перенумеровать ID и UID всех юзеров по порядку регистрации">🔢 Перенумеровать ID/UID</button>
-                    <button class="btn btn-primary" onclick="openUserModal()">+ Add User</button>
-                </div>
+      <div id="tab-users" class="tab-content" hidden>
+        <div class="card" style="margin-top:0">
+          <div class="card-head">
+            <h2>Пользователи</h2>
+            <div class="toolbar">
+              <input class="search" id="userSearch" type="search" placeholder="Поиск по логину или UID" oninput="renderUsers()">
+              <button class="btn btn-secondary" onclick="reindexUsers()" title="Перенумеровать ID и UID по порядку регистрации">Перенумеровать ID/UID</button>
+              <button class="btn btn-primary" onclick="openUserModal()">+ Добавить</button>
             </div>
-            <div class="card">
-                <table id="usersTable">
-                    <thead>
-                        <tr>
-                            <th>ID</th><th>UID</th><th>Username</th><th>Role</th><th>Доступ</th><th>Статус</th><th>HWID</th><th>Last Login</th><th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
+          </div>
+          <div class="table-wrap">
+            <table id="usersTable">
+              <thead><tr><th>ID</th><th>UID</th><th>Логин</th><th>Роль</th><th>Доступ</th><th>Статус</th><th>HWID</th><th>Последний вход</th><th>Действия</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
+      </div>
 
-        <div id="tab-logs" class="tab-content" style="display:none;">
-            <h2>Authentication Logs</h2>
-            <div class="card">
-                <div id="logsContainer"></div>
-            </div>
+      <div id="tab-logs" class="tab-content" hidden>
+        <div class="card" style="margin-top:0">
+          <div class="card-head"><h2>Логи аутентификации</h2><span class="text-muted">Последние 100 записей</span></div>
+          <div class="card-body" id="logsContainer"><div class="empty">Загрузка…</div></div>
         </div>
+      </div>
 
-        <div id="tab-settings" class="tab-content" style="display:none;">
-            <h2>Server Settings</h2>
-            <div class="card">
-                <div class="form-group">
-                    <label>Mod Download URL</label>
-                    <input type="text" id="modUrlInput" placeholder="https://..." style="width:100%;">
-                </div>
-                <button class="btn btn-primary" onclick="saveModUrl()">Save Mod URL</button>
+      <div id="tab-settings" class="tab-content" hidden>
+        <div class="card" style="max-width:760px;margin-top:0">
+          <div class="card-head"><h2>Ссылки на файлы</h2></div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="modUrlInput">URL мода</label>
+              <input type="text" id="modUrlInput" placeholder="https://...">
             </div>
-            <div class="card" style="margin-top:20px;">
-                <div class="form-group">
-                    <label>Loader Download URL</label>
-                    <input type="text" id="loaderUrlInput" placeholder="https://..." style="width:100%;">
-                </div>
-                <button class="btn btn-primary" onclick="saveLoaderUrl()">Save Loader URL</button>
+            <button class="btn btn-primary" onclick="saveModUrl()">Сохранить URL мода</button>
+            <div class="form-group" style="margin-top:26px">
+              <label for="loaderUrlInput">URL лоадера</label>
+              <input type="text" id="loaderUrlInput" placeholder="https://...">
             </div>
+            <button class="btn btn-primary" onclick="saveLoaderUrl()">Сохранить URL лоадера</button>
+          </div>
         </div>
+      </div>
+    </div>
+  </main>
+</div>
 
-        <!-- User Modal -->
-        <div class="modal" id="userModal">
-            <div class="modal-content">
-                <h3 id="modalTitle">Add User</h3>
-                <form id="userForm">
-                    <input type="hidden" id="userId">
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" id="usernameInput" required>
-                    </div>
-                    <div class="form-group">
-                        <label>UID (порядковый номер; админ может менять любому)</label>
-                        <input type="number" id="uidInput" min="1" placeholder="Пусто = следующий по порядку">
-                    </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="passwordInput" placeholder="Leave empty to keep current">
-                    </div>
-                    <div class="form-group">
-                        <label>Роль</label>
-                        <select id="roleSelect">
-                            <option value="user">Обычный юзер</option>
-                            <option value="client">Клиент (купил)</option>
-                            <option value="admin">Админ</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Выдать доступ</label>
-                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                            <input type="number" id="grantDaysInput" min="1" max="3650" placeholder="Дней" style="width:90px; padding:8px;">
-                            <button type="button" class="btn btn-primary" onclick="grantDays()" style="padding:8px 12px;">Добавить дни</button>
-                            <button type="button" class="btn btn-secondary" onclick="setLifetime()" style="padding:8px 12px;">Пожизненно</button>
-                            <button type="button" class="btn btn-danger" onclick="clearAccess()" style="padding:8px 12px;">Снять доступ</button>
-                        </div>
-                        <div style="font-size:0.8rem; color:#8b949e; margin-top:6px;" id="accessInfo">Нет доступа</div>
-                    </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="isActiveCheck"> Active
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="resetHwidCheck"> Reset HWID
-                        </label>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </div>
-                </form>
-            </div>
+<!-- Форма входа -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <h3>Вход в админ-панель</h3>
+    <p>Используй учётные данные администратора.</p>
+    <form id="loginForm">
+      <div class="form-group"><label for="loginUser">Логин</label><input type="text" id="loginUser" autocomplete="username" required></div>
+      <div class="form-group"><label for="loginPass">Пароль</label><input type="password" id="loginPass" autocomplete="current-password" required></div>
+      <button class="btn btn-primary btn-block" type="submit" id="loginBtn" style="width:100%">Войти</button>
+    </form>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- Форма пользователя -->
+<div class="modal" id="userModal">
+  <div class="modal-content">
+    <h3 id="modalTitle">Новый пользователь</h3>
+    <form id="userForm">
+      <input type="hidden" id="userId">
+      <div class="form-row">
+        <div class="form-group"><label for="usernameInput">Логин</label><input type="text" id="usernameInput" required></div>
+        <div class="form-group"><label for="uidInput">UID</label><input type="number" id="uidInput" min="1" placeholder="Пусто = следующий"></div>
+      </div>
+      <div class="form-group"><label for="passwordInput">Пароль</label><input type="password" id="passwordInput" placeholder="Оставь пустым, чтобы не менять"></div>
+      <div class="form-group">
+        <label for="roleSelect">Роль</label>
+        <select id="roleSelect">
+          <option value="user">Пользователь</option>
+          <option value="client">Клиент</option>
+          <option value="admin">Админ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Доступ</label>
+        <div class="field-actions">
+          <input type="number" id="grantDaysInput" min="1" max="3650" placeholder="Дней" style="width:90px">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="grantDays()">Добавить дни</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="setLifetime()">Пожизненно</button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="clearAccess()">Снять доступ</button>
         </div>
+        <div class="hint" id="accessInfo">Нет доступа</div>
+      </div>
+      <div class="form-group" style="display:flex;gap:22px">
+        <label class="checkline"><input type="checkbox" id="isActiveCheck"> Активен</label>
+        <label class="checkline"><input type="checkbox" id="resetHwidCheck"> Сбросить HWID</label>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Отмена</button>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+      </div>
+    </form>
+  </div>
+</div>
 
-        <div class="toast" id="toast"></div>
-    </main>
+<div class="toast" id="toast"></div>
 
-    <script>
-        let authToken = '';
-        const API_BASE = '/api';
+<script>
+  let authToken = '';
+  let allUsers = [];
+  const API_BASE = '/api';
 
-        // Tab switching
-        document.querySelectorAll('.nav a').forEach(a => {
-            a.addEventListener('click', e => {
-                e.preventDefault();
-                document.querySelectorAll('.nav a').forEach(x => x.classList.remove('active'));
-                a.classList.add('active');
-                document.querySelectorAll('.tab-content').forEach(x => x.style.display = 'none');
-                document.getElementById('tab-' + a.dataset.tab).style.display = 'block';
-                document.getElementById('pageTitle').textContent = a.textContent.trim();
-            });
-        });
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
 
-        // Toast
-        function showToast(message, type = 'success') {
-            const t = document.getElementById('toast');
-            t.textContent = message;
-            t.className = 'toast show ' + type;
-            setTimeout(() => t.classList.remove('show'), 3000);
-        }
+  const pageTitles = { dashboard: 'Обзор', users: 'Пользователи', logs: 'Логи входов', settings: 'Настройки' };
+  document.querySelectorAll('.nav a').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelectorAll('.nav a').forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(x => { x.hidden = true; x.style.display = ''; });
+      const tab = document.getElementById('tab-' + a.dataset.tab);
+      tab.hidden = false;
+      document.getElementById('pageTitle').textContent = pageTitles[a.dataset.tab];
+    });
+  });
 
-        // Auth
-        async function api(path, options = {}) {
-            const headers = { 'Content-Type': 'application/json', ...options.headers };
-            if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
-            const res = await fetch(API_BASE + path, { ...options, headers });
-            // 401 = нет токена, 403 = роль в токене устарела (напр. была client, стала admin).
-            // В обоих случаях токен недействителен — сбрасываем и просим войти заново.
-            if (res.status === 401 || res.status === 403) { logout(); return null; }
-            return res;
-        }
+  function showToast(message, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = message;
+    t.className = 'toast show ' + type;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
 
-        async function checkAuth() {
-            const token = localStorage.getItem('authToken');
-            if (!token) { showLogin(); return; }
-            authToken = token;
-            const res = await api('/auth/verify');
-            if (res && res.ok) {
-                const data = await res.json();
-                document.getElementById('currentUser').textContent = data.username + (data.isAdmin ? ' (Admin)' : '');
-                loadDashboard();
-            } else {
-                showLogin();
-            }
-        }
+  async function api(path, options = {}) {
+    const headers = { 'Content-Type': 'application/json', ...options.headers };
+    if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
+    const res = await fetch(API_BASE + path, { ...options, headers });
+    if (res.status === 401 || res.status === 403) { logout(); return null; }
+    return res;
+  }
 
-        function showLogin() {
-            const user = prompt('Enter username:');
-            const pass = prompt('Enter password:');
-            if (!user || !pass) { showLogin(); return; }
-            login(user, pass);
-        }
+  async function checkAuth() {
+    const token = localStorage.getItem('authToken');
+    if (!token) { showLogin(); return; }
+    authToken = token;
+    const res = await api('/auth/verify');
+    if (res && res.ok) {
+      const data = await res.json();
+      document.getElementById('currentUser').textContent = data.username;
+      loadDashboard();
+    } else {
+      showLogin();
+    }
+  }
 
-        async function login(username, password) {
-            const res = await fetch(API_BASE + '/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                authToken = data.token;
-                localStorage.setItem('authToken', authToken);
-                document.getElementById('currentUser').textContent = data.username + (data.isAdmin ? ' (Admin)' : '');
-                loadDashboard();
-            } else {
-                const err = await res.json();
-                alert('Login failed: ' + (err.error || 'Unknown error'));
-                showLogin();
-            }
-        }
+  function showLogin() {
+    document.getElementById('loginOverlay').classList.add('show');
+  }
+  function hideLogin() {
+    document.getElementById('loginOverlay').classList.remove('show');
+  }
 
-        function logout() {
-            authToken = '';
-            localStorage.removeItem('authToken');
-            showLogin();
-        }
+  document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('loginBtn');
+    const err = document.getElementById('loginErr');
+    err.textContent = '';
+    btn.disabled = true; btn.textContent = 'Вход…';
+    try {
+      const res = await fetch(API_BASE + '/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('loginUser').value,
+          password: document.getElementById('loginPass').value
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        authToken = data.token;
+        localStorage.setItem('authToken', authToken);
+        localStorage.setItem('flux_token', authToken);
+        document.getElementById('currentUser').textContent = data.username;
+        hideLogin();
+        loadDashboard();
+      } else {
+        const body = await res.json().catch(() => ({}));
+        err.textContent = body.error || 'Неверный логин или пароль';
+      }
+    } catch (ex) {
+      err.textContent = 'Сервер недоступен';
+    }
+    btn.disabled = false; btn.textContent = 'Войти';
+  });
 
-        // Dashboard
-        async function loadDashboard() {
-            const res = await api('/admin/stats');
-            if (!res) return;
-            const data = await res.json();
-            document.getElementById('statTotal').textContent = data.totalUsers;
-            document.getElementById('statAdmins').textContent = data.admins;
-            document.getElementById('statClients').textContent = data.clients;
-            document.getElementById('statUsers').textContent = data.users;
-            document.getElementById('statWithAccess').textContent = data.clientsWithAccess;
-            document.getElementById('statExpired').textContent = data.expiredClients;
-            document.getElementById('statHwid').textContent = data.hwidLocked;
-            document.getElementById('statLogins').textContent = data.recentLogins;
+  function logout() {
+    authToken = '';
+    localStorage.removeItem('authToken');
+    showLogin();
+  }
 
-            if (data.admins === 0) {
-                document.getElementById('tab-users').style.display = 'none';
-                document.querySelector('[data-tab="users"]').style.display = 'none';
-                document.querySelector('[data-tab="logs"]').style.display = 'none';
-                document.querySelector('[data-tab="settings"]').style.display = 'none';
-            } else {
-                loadUsers();
-                loadLogs();
-                loadModUrl();
-            }
-        }
+  async function loadDashboard() {
+    const res = await api('/admin/stats');
+    if (!res) return;
+    const data = await res.json();
+    document.getElementById('statTotal').textContent = data.totalUsers;
+    document.getElementById('statAdmins').textContent = data.admins;
+    document.getElementById('statClients').textContent = data.clients;
+    document.getElementById('statUsers').textContent = data.users;
+    document.getElementById('statWithAccess').textContent = data.clientsWithAccess;
+    document.getElementById('statExpired').textContent = data.expiredClients;
+    document.getElementById('statHwid').textContent = data.hwidLocked;
+    document.getElementById('statLogins').textContent = data.recentLogins;
 
-        // Users
-        async function loadUsers() {
-            const res = await api('/admin/users');
-            if (!res) return;
-            const users = await res.json();
-            const tbody = document.querySelector('#usersTable tbody');
-            tbody.innerHTML = users.map(u => {
-                const roleBadge = u.role === 'admin' ? '<span class="badge badge-admin">Админ</span>'
-                    : u.role === 'client' ? '<span class="badge badge-client">Клиент</span>'
-                    : '<span class="badge">Юзер</span>';
-                const access = u.role === 'client'
-                    ? (u.accessExpiresAt ? 'до ' + new Date(u.accessExpiresAt).toLocaleDateString() : '♾ Пожизненно')
-                    : '—';
-                return `
-                <tr>
-                    <td>${u.id}</td>
-                    <td>${u.uid ?? '—'}</td>
-                    <td>${u.username}</td>
-                    <td>${roleBadge}</td>
-                    <td><span class="${u.hasAccess ? '' : 'text-muted'}">${access}${u.hasAccess ? '' : u.role === 'client' ? ' (истёк)' : ''}</span></td>
-                    <td><span class="badge ${u.isActive ? 'badge-active' : 'badge-inactive'}">${u.isActive ? 'Active' : 'Disabled'}</span></td>
-                    <td><span class="badge ${u.hwid ? 'badge-hwid' : ''}">${u.hwid ? 'Locked' : 'Not bound'}</span></td>
-                    <td>${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Never'}</td>
-                    <td>
-                        <div class="actions">
-                            <button class="btn btn-secondary" style="padding:6px 10px;font-size:0.8rem;" onclick="editUser(${u.id}, ${u.uid ?? 'null'}, '${u.username}', '${u.role}', ${u.isActive}, ${u.hasAccess}, '${(u.accessExpiresAt ? u.accessExpiresAt : '')}', '${u.hwid || ''}')">Edit</button>
-                            <button class="btn btn-danger" style="padding:6px 10px;font-size:0.8rem;" onclick="deleteUser(${u.id}, '${u.username}')">Delete</button>
-                        </div>
-                    </td>
-                </tr>`;
-            }).join('');
-        }
+    if (data.admins === 0) {
+      ['users', 'logs', 'settings'].forEach(t => {
+        document.getElementById('tab-' + t).style.display = 'none';
+        document.querySelector('[data-tab="' + t + '"]').style.display = 'none';
+      });
+    } else {
+      loadUsers();
+      loadLogs();
+      loadModUrl();
+    }
+  }
 
-        let editingUser = null;
+  async function loadUsers() {
+    const res = await api('/admin/users');
+    if (!res) return;
+    allUsers = await res.json();
+    renderUsers();
+  }
 
-        function openUserModal(user = null) {
-            document.getElementById('userForm').reset();
-            document.getElementById('userId').value = '';
-            document.getElementById('passwordInput').required = !user;
-            document.getElementById('modalTitle').textContent = user ? 'Изменить юзера' : 'Новый юзер';
-            editingUser = user;
-            if (user) {
-                document.getElementById('userId').value = user.id;
-                document.getElementById('usernameInput').value = user.username;
-                document.getElementById('uidInput').value = user.uid ?? '';
-                document.getElementById('roleSelect').value = user.role || (user.isAdmin ? 'admin' : 'user');
-                document.getElementById('isActiveCheck').checked = user.isActive;
-                document.getElementById('passwordInput').placeholder = 'Оставь пустым — не менять';
-                updateAccessInfo(user);
-            } else {
-                document.getElementById('roleSelect').value = 'user';
-                document.getElementById('accessInfo').textContent = '—';
-                document.getElementById('passwordInput').placeholder = 'Пароль нового юзера';
-            }
-            document.getElementById('userModal').classList.add('show');
-        }
+  function renderUsers() {
+    const q = (document.getElementById('userSearch').value || '').trim().toLowerCase();
+    const users = allUsers.filter(u =>
+      !q || (u.username || '').toLowerCase().includes(q) || String(u.uid ?? '').includes(q)
+    );
+    document.querySelector('#usersTable tbody').innerHTML = users.length ? users.map(u => {
+      const roleBadge = u.role === 'admin' ? '<span class="badge badge-admin">Админ</span>'
+        : u.role === 'client' ? '<span class="badge badge-client">Клиент</span>'
+        : '<span class="badge">Пользователь</span>';
+      const access = u.role === 'client'
+        ? (u.accessExpiresAt ? 'до ' + new Date(u.accessExpiresAt).toLocaleDateString() : '♾ Пожизненно')
+        : '—';
+      return `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.uid ?? '—'}</td>
+          <td>${esc(u.username)}</td>
+          <td>${roleBadge}</td>
+          <td><span class="${u.hasAccess ? '' : 'text-muted'}">${access}${!u.hasAccess && u.role === 'client' ? ' (истёк)' : ''}</span></td>
+          <td><span class="badge ${u.isActive ? 'badge-active' : 'badge-inactive'}">${u.isActive ? 'Активен' : 'Отключён'}</span></td>
+          <td><span class="badge ${u.hwid ? 'badge-hwid' : ''}">${u.hwid ? 'Привязан' : 'Нет'}</span></td>
+          <td>${u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Никогда'}</td>
+          <td><div class="actions">
+            <button class="btn btn-secondary btn-sm" onclick="editUser(${u.id})">Изменить</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})">Удалить</button>
+          </div></td>
+        </tr>`;
+    }).join('') : '<tr><td colspan="9" class="empty">Ничего не найдено</td></tr>';
+  }
 
-        function updateAccessInfo(u) {
-            const info = document.getElementById('accessInfo');
-            if (u.role !== 'client') { info.textContent = 'Нет доступа'; return; }
-            info.textContent = u.accessExpiresAt
-                ? 'Доступ до ' + new Date(u.accessExpiresAt).toLocaleString()
-                : 'Пожизненный доступ (♾)';
-        }
+  let editingUser = null;
 
-        function closeUserModal() {
-            document.getElementById('userModal').classList.remove('show');
-        }
+  function openUserModal(user = null) {
+    document.getElementById('userForm').reset();
+    document.getElementById('userId').value = '';
+    document.getElementById('passwordInput').required = !user;
+    document.getElementById('modalTitle').textContent = user ? 'Изменить пользователя' : 'Новый пользователь';
+    editingUser = user;
+    if (user) {
+      document.getElementById('userId').value = user.id;
+      document.getElementById('usernameInput').value = user.username;
+      document.getElementById('uidInput').value = user.uid ?? '';
+      document.getElementById('roleSelect').value = user.role || (user.isAdmin ? 'admin' : 'user');
+      document.getElementById('isActiveCheck').checked = user.isActive;
+      document.getElementById('passwordInput').placeholder = 'Оставь пустым — не менять';
+      updateAccessInfo(user);
+    } else {
+      document.getElementById('roleSelect').value = 'user';
+      document.getElementById('accessInfo').textContent = '—';
+      document.getElementById('passwordInput').placeholder = 'Пароль нового пользователя';
+    }
+    document.getElementById('userModal').classList.add('show');
+  }
 
-        async function grantDays() {
-            const days = parseInt(document.getElementById('grantDaysInput').value);
-            const id = document.getElementById('userId').value;
-            if (!id) { alert('Сначала выбери юзера'); return; }
-            if (!days || days <= 0) { alert('Введи количество дней'); return; }
-            await accessAction({ grantDays: days });
-        }
-        async function setLifetime() {
-            const id = document.getElementById('userId').value;
-            if (!id) { alert('Сначала выбери юзера'); return; }
-            await accessAction({ setLifetime: true });
-        }
-        async function clearAccess() {
-            const id = document.getElementById('userId').value;
-            if (!id) { alert('Сначала выбери юзера'); return; }
-            if (!confirm('Снять доступ у клиента (роль станет «юзер»)?')) return;
-            await accessAction({ clearAccess: true });
-        }
-        async function accessAction(patch) {
-            const id = document.getElementById('userId').value;
-            const res = await api('/admin/users/' + id, { method: 'PUT', body: JSON.stringify({ ...patch, isActive: true }) });
-            if (res && res.ok) {
-                const data = await res.json();
-                showToast('Доступ обновлён');
-                editingUser = { ...editingUser, role: data.role, accessExpiresAt: data.accessExpiresAt };
-                document.getElementById('roleSelect').value = data.role;
-                updateAccessInfo(editingUser);
-                loadUsers();
-            } else {
-                const err = await res?.json();
-                showToast(err?.error || 'Ошибка', 'error');
-            }
-        }
+  function updateAccessInfo(u) {
+    const info = document.getElementById('accessInfo');
+    if (u.role !== 'client') { info.textContent = 'Нет доступа'; return; }
+    info.textContent = u.accessExpiresAt
+      ? 'Доступ до ' + new Date(u.accessExpiresAt).toLocaleString()
+      : 'Пожизненный доступ';
+  }
 
-        document.getElementById('userForm').addEventListener('submit', async e => {
-            e.preventDefault();
-            const id = document.getElementById('userId').value;
-            const uidRaw = document.getElementById('uidInput').value.trim();
-            const data = {
-                username: document.getElementById('usernameInput').value,
-                password: document.getElementById('passwordInput').value,
-                role: document.getElementById('roleSelect').value,
-                isActive: document.getElementById('isActiveCheck').checked,
-                resetHwid: document.getElementById('resetHwidCheck').checked,
-                uid: uidRaw ? parseInt(uidRaw, 10) : undefined
-            };
-            if (!data.password && !id) { alert('Пароль обязателен для нового юзера'); return; }
+  function closeUserModal() { document.getElementById('userModal').classList.remove('show'); }
 
-            const res = await api(id ? `/admin/users/${id}` : '/admin/users', {
-                method: id ? 'PUT' : 'POST',
-                body: JSON.stringify(data)
-            });
-            if (res && res.ok) {
-                showToast(id ? 'Юзер обновлён' : 'Юзер создан');
-                closeUserModal();
-                loadUsers();
-            } else {
-                const err = await res?.json();
-                showToast(err?.error || 'Ошибка', 'error');
-            }
-        });
+  async function grantDays() {
+    const days = parseInt(document.getElementById('grantDaysInput').value);
+    if (!document.getElementById('userId').value) { showToast('Сначала выбери пользователя', 'error'); return; }
+    if (!days || days <= 0) { showToast('Введи количество дней', 'error'); return; }
+    await accessAction({ grantDays: days });
+  }
+  async function setLifetime() {
+    if (!document.getElementById('userId').value) { showToast('Сначала выбери пользователя', 'error'); return; }
+    await accessAction({ setLifetime: true });
+  }
+  async function clearAccess() {
+    if (!document.getElementById('userId').value) { showToast('Сначала выбери пользователя', 'error'); return; }
+    if (!confirm('Снять доступ у клиента? Роль станет «пользователь».')) return;
+    await accessAction({ clearAccess: true });
+  }
+  async function accessAction(patch) {
+    const id = document.getElementById('userId').value;
+    const res = await api('/admin/users/' + id, { method: 'PUT', body: JSON.stringify({ ...patch, isActive: true }) });
+    if (res && res.ok) {
+      const data = await res.json();
+      showToast('Доступ обновлён');
+      editingUser = { ...editingUser, role: data.role, accessExpiresAt: data.accessExpiresAt };
+      document.getElementById('roleSelect').value = data.role;
+      updateAccessInfo(editingUser);
+      loadUsers();
+    } else {
+      const err = await res?.json().catch(() => null);
+      showToast(err?.error || 'Ошибка', 'error');
+    }
+  }
 
-        async function editUser(id, uid, username, role, isActive, hasAccess, accessExpiresAt, hwid) {
-            openUserModal({ id, uid, username, role, isActive, accessExpiresAt, hwid });
-        }
+  document.getElementById('userForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const id = document.getElementById('userId').value;
+    const uidRaw = document.getElementById('uidInput').value.trim();
+    const data = {
+      username: document.getElementById('usernameInput').value,
+      password: document.getElementById('passwordInput').value,
+      role: document.getElementById('roleSelect').value,
+      isActive: document.getElementById('isActiveCheck').checked,
+      resetHwid: document.getElementById('resetHwidCheck').checked,
+      uid: uidRaw ? parseInt(uidRaw, 10) : undefined
+    };
+    if (!data.password && !id) { showToast('Пароль обязателен для нового пользователя', 'error'); return; }
 
-        async function deleteUser(id, username) {
-            if (!confirm(`Delete user "${username}"?`)) return;
-            const res = await api('/admin/users/' + id, { method: 'DELETE' });
-            if (res && res.ok) {
-                showToast('User deleted');
-                loadUsers();
-            } else {
-                showToast('Failed to delete', 'error');
-            }
-        }
+    const res = await api(id ? `/admin/users/${id}` : '/admin/users', {
+      method: id ? 'PUT' : 'POST',
+      body: JSON.stringify(data)
+    });
+    if (res && res.ok) {
+      showToast(id ? 'Пользователь обновлён' : 'Пользователь создан');
+      closeUserModal();
+      loadUsers();
+    } else {
+      const err = await res?.json().catch(() => null);
+      showToast(err?.error || 'Ошибка', 'error');
+    }
+  });
 
-        async function reindexUsers() {
-            if (!confirm('Перенумеровать ID и UID всех юзеров по порядку регистрации (1..N)?\nUID = новый ID. Это действие нельзя отменить.')) return;
-            const res = await api('/admin/reindex-users', { method: 'POST' });
-            if (res && res.ok) {
-                const d = await res.json();
-                showToast(`Готово: ${d.reindexed} юзеров перенумеровано`);
-                loadUsers();
-            } else {
-                showToast('Ошибка перенумерации', 'error');
-            }
-        }
+  function editUser(id) {
+    const user = allUsers.find(u => u.id === id);
+    if (user) openUserModal(user);
+  }
 
-        // Logs
-        async function loadLogs() {
-            const res = await api('/admin/logs?limit=100');
-            if (!res) return;
-            const logs = await res.json();
-            document.getElementById('logsContainer').innerHTML = logs.map(l => `
-                <div class="log-entry ${l.success ? 'success' : 'fail'}">
-                    [${new Date(l.createdAt).toLocaleString()}] ${l.username || 'Unknown'} - ${l.action} - ${l.ipAddress || ''} ${l.hwid ? '- HWID: ' + l.hwid : ''} - ${l.success ? 'OK' : 'FAILED'}
-                </div>
-            `).join('');
-        }
+  async function deleteUser(id) {
+    if (!confirm('Удалить пользователя?')) return;
+    const res = await api('/admin/users/' + id, { method: 'DELETE' });
+    if (res && res.ok) { showToast('Пользователь удалён'); loadUsers(); }
+    else showToast('Не удалось удалить', 'error');
+  }
 
-        // Settings
-        async function loadModUrl() {
-            const res = await api('/mod/version');
-            if (res) {
-                const data = await res.json();
-                document.getElementById('modUrlInput').value = data.downloadUrl;
-                document.getElementById('loaderUrlInput').value = data.loaderDownloadUrl || '';
-            }
-        }
+  async function reindexUsers() {
+    if (!confirm('Перенумеровать ID и UID всех пользователей по порядку регистрации (1..N)?\nUID станет равен новому ID. Отменить нельзя.')) return;
+    const res = await api('/admin/reindex-users', { method: 'POST' });
+    if (res && res.ok) {
+      const d = await res.json();
+      showToast('Готово: перенумеровано ' + d.reindexed);
+      loadUsers();
+    } else showToast('Ошибка перенумерации', 'error');
+  }
 
-        async function saveModUrl() {
-            const url = document.getElementById('modUrlInput').value;
-            const res = await api('/mod/version', {
-                method: 'POST',
-                body: JSON.stringify({ downloadUrl: url })
-            });
-            if (res && res.ok) showToast('Mod URL updated');
-            else showToast('Failed', 'error');
-        }
+  async function loadLogs() {
+    const res = await api('/admin/logs?limit=100');
+    if (!res) return;
+    const logs = await res.json();
+    document.getElementById('logsContainer').innerHTML = logs.length ? logs.map(l => `
+      <div class="log-entry ${l.success ? 'success' : 'fail'}">
+        [${new Date(l.createdAt).toLocaleString()}] ${esc(l.username || 'Unknown')} — ${esc(l.action)} — ${esc(l.ipAddress || '')}${l.hwid ? ' — HWID: ' + esc(l.hwid) : ''} — ${l.success ? 'OK' : 'FAILED'}
+      </div>`).join('') : '<div class="empty">Логов пока нет</div>';
+  }
 
-        async function saveLoaderUrl() {
-            const url = document.getElementById('loaderUrlInput').value;
-            const res = await api('/mod/loader', {
-                method: 'POST',
-                body: JSON.stringify({ downloadUrl: url })
-            });
-            if (res && res.ok) showToast('Loader URL updated');
-            else showToast('Failed', 'error');
-        }
+  async function loadModUrl() {
+    const res = await api('/mod/version');
+    if (res && res.ok) {
+      const data = await res.json();
+      document.getElementById('modUrlInput').value = data.downloadUrl;
+      document.getElementById('loaderUrlInput').value = data.loaderDownloadUrl || '';
+    }
+  }
 
-        // Init
-        checkAuth();
-    </script>
+  async function saveModUrl() {
+    const res = await api('/mod/version', {
+      method: 'POST',
+      body: JSON.stringify({ downloadUrl: document.getElementById('modUrlInput').value })
+    });
+    showToast(res && res.ok ? 'URL мода обновлён' : 'Ошибка', res && res.ok ? 'success' : 'error');
+  }
+
+  async function saveLoaderUrl() {
+    const res = await api('/mod/loader', {
+      method: 'POST',
+      body: JSON.stringify({ downloadUrl: document.getElementById('loaderUrlInput').value })
+    });
+    showToast(res && res.ok ? 'URL лоадера обновлён' : 'Ошибка', res && res.ok ? 'success' : 'error');
+  }
+
+  checkAuth();
+</script>
 </body>
 </html>
