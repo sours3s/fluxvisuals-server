@@ -293,7 +293,7 @@ using (var scope = app.Services.CreateScope())
 
     var adminPassword = builder.Configuration["BootstrapAdminPassword"]
         ?? Environment.GetEnvironmentVariable("FLUXVISUALS_ADMIN_PASSWORD")
-        ?? "sobaka";
+        ?? "admin123";
 
     if (!await db.Users.AnyAsync())
     {
