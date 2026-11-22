@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using AuthServer.Controllers;
 using AuthServer.Data;
 using AuthServer.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -49,6 +50,14 @@ builder.Services.Configure<AiProviderOptions>(opt =>
             ?? "";
 });
 builder.Services.AddSingleton<AiChatService>();
+
+// Discord-боты обращаются к Catal через общий секрет, а не через аккаунт FluxVisuals.
+builder.Services.Configure<BotGatewayOptions>(opt =>
+{
+    opt.SharedSecret = builder.Configuration["Bot:SharedSecret"]
+        ?? Environment.GetEnvironmentVariable("FLUXVISUALS_BOT_SECRET")
+        ?? "";
+});
 
 // Одноразовые launch-тикеты (защита: мод работает только через лоадер).
 builder.Services.Configure<LaunchTicketSettings>(builder.Configuration.GetSection("LaunchTickets"));
