@@ -36,6 +36,17 @@ builder.Services.Configure<JwtSettings>(opt =>
 builder.Services.AddSingleton<JwtService>();
 builder.Services.AddHttpClient();
 
+// Catal: ключ ИИ только в env FLUXVISUALS_AI_KEY / Ai__ApiKey на сервере, никогда не в WebView.
+builder.Services.Configure<AiProviderOptions>(opt =>
+{
+    builder.Configuration.GetSection("Ai").Bind(opt);
+    if (string.IsNullOrWhiteSpace(opt.ApiKey))
+        opt.ApiKey = Environment.GetEnvironmentVariable("FLUXVISUALS_AI_KEY")
+            ?? Environment.GetEnvironmentVariable("AI_API_KEY")
+            ?? "";
+});
+builder.Services.AddSingleton<AiChatService>();
+
 // Одноразовые launch-тикеты (защита: мод работает только через лоадер).
 builder.Services.Configure<LaunchTicketSettings>(builder.Configuration.GetSection("LaunchTickets"));
 builder.Services.AddSingleton<LaunchTicketService>();
@@ -97,6 +108,9 @@ app.Use(async (context, next) =>
 // «Сервер отклонил выдачу тикета» без понятной причины).
 if (string.IsNullOrWhiteSpace(builder.Configuration["LaunchTickets:PrivateKey"]))
     app.Logger.LogError("LaunchTickets:PrivateKey НЕ ЗАДАН. Установи env LaunchTickets__PrivateKey = содержимое flux-private.pem — иначе /api/launch/issue вернёт ошибку.");
+
+if (!app.Services.GetRequiredService<AiChatService>().Configured)
+    app.Logger.LogWarning("FLUXVISUALS_AI_KEY / Ai__ApiKey НЕ ЗАДАН — Catal в лоадере будет недоступен.");
 
 // Создаём схему сами. EnsureCreated() нельзя использовать с Supabase: там уже есть
 // служебные схемы (auth/storage/extensions), поэтому EF считает БД инициализированной

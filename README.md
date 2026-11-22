@@ -16,7 +16,8 @@ HEAD
    git push -u origin main
    ```
 2. **База**: render.com → New → **PostgreSQL** (Free) → скопируй **Internal Database URL**
-3. **Сервис**: render.com → New → **Web Service** → репозиторий → Render найдёт `Dockerfile` → в Environment добавь `DATABASE_URL` = (строка из шага 2) → Create Web Service
+3. **Сервис**: render.com → New → **Web Service** → репозиторий → Render найдёт `Dockerfile` → в Environment добавь `DATABASE_URL` = (строка из шага 2) и `FLUXVISUALS_AI_KEY` = ключ ИИ-провайдера для Catal → Create Web Service
+   - Без `FLUXVISUALS_AI_KEY` ИИ-саппорт Catal в лоадере будет недоступен. Ключ остаётся только на сервере и никогда не попадает в лоадер, сайт или логи.
 4. Готово, адрес вида `https://fluxvisuals-server.onrender.com`
    - Сайт: `/` · Логин: `/login.html` · Регистрация: `/register.html`
    - Кабинет: `/account.html` · Админка: `/admin/` (логин `admin`, пароль из БД)
