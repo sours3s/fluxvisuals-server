@@ -535,10 +535,12 @@ img { max-width: 100%; }
   border-radius: 11px;
   display: grid;
   place-items: center;
+  overflow: hidden;
   background: linear-gradient(140deg, #8d7cff, #5e50d8);
   color: #fff;
   font-weight: 800;
 }
+.avatar img { display: block; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .side-user b { display: block; font-size: 14px; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
 .side-user span { color: var(--dim); font-size: 11.5px; }
 .side-label { color: var(--dim); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; padding: 22px 10px 8px; }

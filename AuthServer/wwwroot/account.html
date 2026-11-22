@@ -18,7 +18,7 @@
   <aside class="side">
     <a class="brand" href="/"><span class="brand-mark">F</span><span class="brand-text">FLUX<span>VISUALS</span></span></a>
     <div class="side-user">
-      <div class="avatar" id="sideAvatar">F</div>
+      <span class="avatar" id="sideAvatar"><img src="/img/user.png?v=3" alt="Аватар пользователя"></span>
       <div><b id="sideName">…</b><span id="sideUid">UID —</span></div>
     </div>
     <div class="side-label">Кабинет</div>
@@ -38,7 +38,7 @@
     <header class="app-top">
       <div class="crumb">Кабинет / <b id="crumbCurrent">Обзор</b></div>
       <div class="top-right">
-        <div class="avatar" id="topAvatar">F</div>
+        <span class="avatar" id="topAvatar"><img src="/img/user.png?v=3" alt="Аватар пользователя"></span>
       </div>
     </header>
 
@@ -50,7 +50,7 @@
       </div>
 
       <div class="profile-hero">
-        <div class="avatar" id="profileAvatar">F</div>
+        <span class="avatar" id="profileAvatar"><img src="/img/user.png?v=3" alt="Аватар пользователя"></span>
         <div>
           <h2 id="profileName">…</h2>
           <div class="chips"><span class="chip ac" id="roleBadge">…</span><span class="chip" id="profileUid">UID —</span></div>
@@ -212,13 +212,15 @@
     const full = await apiJson('/account/me');
     if (full.res.ok && full.data) me = { ...me, ...full.data };
 
-    const initial = (me.username || 'F').charAt(0).toUpperCase();
     document.getElementById('acctName').textContent = me.username;
     document.getElementById('profileName').textContent = me.username;
     document.getElementById('sideName').textContent = me.username;
     document.getElementById('sideUid').textContent = 'UID ' + (me.uid ?? '—');
     document.getElementById('profileUid').textContent = 'UID ' + (me.uid ?? '—');
-    ['profileAvatar', 'sideAvatar', 'topAvatar'].forEach(id => document.getElementById(id).textContent = initial);
+    ['profileAvatar', 'sideAvatar', 'topAvatar'].forEach(id => {
+      const img = document.getElementById(id)?.querySelector('img');
+      if (img) img.alt = 'Аватар ' + (me.username || 'пользователя');
+    });
     document.getElementById('roleBadge').outerHTML = roleBadge(me.role).replace('class="chip', 'id="roleBadge" class="chip');
     document.getElementById('uidText').textContent = me.uid ?? '—';
     document.getElementById('roleText').textContent = roleName(me.role);
