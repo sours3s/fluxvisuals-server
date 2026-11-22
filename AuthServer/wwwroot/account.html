@@ -126,9 +126,43 @@
     <section class="view" id="view-support" hidden>
       <div class="view-head">
         <h1>Поддержка</h1>
-        <p>Напиши в Discord, если лоадер не пускает, мод не запускается или нужно сбросить HWID.</p>
+        <p>Спроси Catal про FluxVisuals или напиши нам в Discord, если нужна помощь с аккаунтом.</p>
       </div>
-      <div class="panel" style="max-width:640px">
+
+      <div class="panel ai-card-site">
+        <div class="ai-head-site">
+          <img class="ai-avatar-site" src="/img/catal.png?v=3" alt="Catal">
+          <div>
+            <h3>Catal</h3>
+            <p id="siteAiStatus">Проверяем доступность…</p>
+          </div>
+          <span class="ai-badge-site">ИИ-саппорт</span>
+        </div>
+        <div class="ai-messages-site" id="siteAiMessages">
+          <div class="ai-empty-site" id="siteAiEmpty">
+            <div class="ai-empty-icon-site">✦</div>
+            <h4>Чем помочь?</h4>
+            <p>Catal отвечает только по FluxVisuals: запуск, моды, модпаки, сайт и аккаунт. Скриншот можно вставить Ctrl+V или прикрепить кнопкой.</p>
+          </div>
+        </div>
+        <div class="ai-attachment-site" id="siteAiAttachment" hidden>
+          <span class="ai-attachment-left-site"><img class="ai-attachment-thumb-site" id="siteAiAttachmentThumb" alt="" hidden><span id="siteAiAttachmentName">Скриншот прикреплён</span></span>
+          <button type="button" id="siteAiAttachmentRemove" title="Убрать вложение" aria-label="Убрать вложение">×</button>
+        </div>
+        <div class="ai-compose-site">
+          <input id="siteAiImageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          <button type="button" class="ai-attach-site" id="siteAiAttach" title="Прикрепить скриншот" aria-label="Прикрепить скриншот">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="9.5" r="1.5" fill="currentColor"/><path d="m5 17 4.5-4.5 3.2 3.2 2.3-2.3L19 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <textarea id="siteAiInput" rows="1" placeholder="Напишите вопрос…"></textarea>
+          <button type="button" class="ai-send-site" id="siteAiSend" title="Отправить" aria-label="Отправить" disabled>
+            <svg viewBox="0 0 24 24" fill="none"><path d="m4 12 16-8-6 16-2.6-6.2L4 12Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="ai-foot-site">Catal — ИИ-саппорт FluxVisuals. Не отправляйте пароли и ключи; скриншот уходит только на сервер FluxVisuals.</div>
+      </div>
+
+      <div class="panel" style="max-width:640px;margin-top:18px">
         <div class="panel-head"><h3>Связаться с нами</h3></div>
         <div class="panel-body stack">
           <p style="color:var(--muted);line-height:1.65;margin:0">Укажи логин, UID и коротко опиши, что сделал перед ошибкой. Для проблем с запуском приложи лог из папки игры. Так ответ будет быстрее.</p>
