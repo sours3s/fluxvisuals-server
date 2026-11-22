@@ -119,7 +119,7 @@ public class AppSettings
 
     public string ModDownloadUrl { get; set; } = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.23/fluxvisuals-1.0.23.jar";
 
-    public string LoaderDownloadUrl { get; set; } = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.12-loader/FluxVisualsLoader.exe";
+    public string LoaderDownloadUrl { get; set; } = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.14-loader/FluxVisualsLoader.exe";
 }
 
 public class LaunchTicket
