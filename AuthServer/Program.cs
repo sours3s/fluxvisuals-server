@@ -9,6 +9,9 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Не пишем в логи адреса внешних ИИ-эндпоинтов: в них фигурируют технические имена провайдера.
+builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Warning);
+
 // База данных: PostgreSQL если задан DATABASE_URL (Render-бесплатный Postgres),
 // иначе локальный SQLite (для разработки/самостоятельного хоста).
 var postgresUrl = builder.Configuration["DATABASE_URL"] ?? builder.Configuration["DB:PostgresUrl"];

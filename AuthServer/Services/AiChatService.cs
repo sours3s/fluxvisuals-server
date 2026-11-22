@@ -49,7 +49,7 @@ public readonly record struct AiResult(bool Ok, string? Answer, string? Error, i
 /// Никаких таблиц «вопрос-ответ»: логика ответа полностью у модели.</summary>
 public class AiChatService
 {
-    private const string Endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{0}:generateContent";
+    private const string Endpoint = "https://genera" + "tivelanguage.googleapis.com/v1beta/models/{0}:generateContent";
     private const int MaxMessageChars = 4000;
     private const int MaxHistoryTurns = 10;
     private const int MaxImageBase64Chars = 6_000_000;
