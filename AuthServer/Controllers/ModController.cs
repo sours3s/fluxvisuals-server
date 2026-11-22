@@ -36,7 +36,7 @@ public class ModController : ControllerBase
         }
         if (string.IsNullOrWhiteSpace(downloadUrl))
         {
-            downloadUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.23/fluxvisuals-1.0.23.jar";
+            downloadUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.25/fluxvisuals-1.0.25.jar";
         }
 
         // Loader URL
