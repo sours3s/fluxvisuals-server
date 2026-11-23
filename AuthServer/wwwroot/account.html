@@ -19,7 +19,7 @@
     <a class="brand" href="/"><span class="brand-mark">F</span><span class="brand-text">FLUX<span>VISUALS</span></span></a>
     <div class="side-user">
       <span class="avatar" id="sideAvatar"><img src="/img/user.png?v=3" alt="Аватар пользователя"></span>
-      <div><b id="sideName">…</b><span id="sideUid">UID —</span></div>
+      <div><b id="sideName">…</b></div>
     </div>
     <div class="side-label">Кабинет</div>
     <nav class="side-nav">
@@ -53,7 +53,7 @@
         <span class="avatar" id="profileAvatar"><img src="/img/user.png?v=3" alt="Аватар пользователя"></span>
         <div>
           <h2 id="profileName">…</h2>
-          <div class="chips"><span class="chip ac" id="roleBadge">…</span><span class="chip" id="profileUid">UID —</span></div>
+          <div class="chips"><span class="chip ac" id="roleBadge">…</span></div>
         </div>
       </div>
 
@@ -62,7 +62,6 @@
           <div class="panel-head"><h3>Аккаунт</h3></div>
           <div class="panel-body">
             <dl class="kv">
-              <div><dt>UID</dt><dd id="uidText">—</dd></div>
               <div><dt>Роль</dt><dd id="roleText">—</dd></div>
               <div><dt>Действует до</dt><dd id="expiryText">—</dd></div>
               <div><dt>HWID</dt><dd id="hwidText">—</dd></div>
@@ -87,7 +86,7 @@
     <!-- Клиент -->
     <section class="view" id="view-download" hidden>
       <div class="view-head">
-        <h1>Клиент</h1>
+        <h1>Лоадер</h1>
         <p>Лоадер скачивается с сайта. Установка не нужна, распакуй и запусти exe.</p>
       </div>
       <div class="panel">
@@ -165,7 +164,7 @@
       <div class="panel" style="max-width:640px;margin-top:18px">
         <div class="panel-head"><h3>Связаться с нами</h3></div>
         <div class="panel-body stack">
-          <p style="color:var(--muted);line-height:1.65;margin:0">Укажи логин, UID и коротко опиши, что сделал перед ошибкой. Для проблем с запуском приложи лог из папки игры. Так ответ будет быстрее.</p>
+          <p style="color:var(--muted);line-height:1.65;margin:0">Укажи логин и коротко опиши, что сделал перед ошибкой. Для проблем с запуском приложи лог из папки игры. Так ответ будет быстрее.</p>
           <a class="btn btn-primary btn-block" href="https://discord.gg/HScqNfYcca" target="_blank" rel="noopener">Открыть Discord</a>
           <div class="notice">Не отправляй пароль в чат. Его хватит только для входа на сайте и в лоадер.</div>
         </div>
@@ -177,7 +176,7 @@
 <script src="/js/site.js?v=3"></script>
 <script>
   let me = null;
-  const viewTitles = { overview: 'Обзор', download: 'Клиент', security: 'Безопасность', support: 'Поддержка' };
+  const viewTitles = { overview: 'Обзор', download: 'Лоадер', security: 'Безопасность', support: 'Поддержка' };
 
   function goView(name) {
     const btn = document.querySelector('.side-link[data-view="' + name + '"]');
@@ -197,7 +196,7 @@
   function roleName(role) {
     if (role === 'admin') return 'Администратор';
     if (role === 'free') return 'Free';
-    if (role === 'client') return 'Клиент';
+    if (role === 'client') return 'Пользователь';
     return 'Без доступа';
   }
 
@@ -215,14 +214,11 @@
     document.getElementById('acctName').textContent = me.username;
     document.getElementById('profileName').textContent = me.username;
     document.getElementById('sideName').textContent = me.username;
-    document.getElementById('sideUid').textContent = 'UID ' + (me.uid ?? '—');
-    document.getElementById('profileUid').textContent = 'UID ' + (me.uid ?? '—');
     ['profileAvatar', 'sideAvatar', 'topAvatar'].forEach(id => {
       const img = document.getElementById(id)?.querySelector('img');
       if (img) img.alt = 'Аватар ' + (me.username || 'пользователя');
     });
     document.getElementById('roleBadge').outerHTML = roleBadge(me.role).replace('class="chip', 'id="roleBadge" class="chip');
-    document.getElementById('uidText').textContent = me.uid ?? '—';
     document.getElementById('roleText').textContent = roleName(me.role);
     document.getElementById('hwidText').textContent = me.hwid ? 'Привязан' : 'Не привязан';
     document.getElementById('expiryText').textContent = me.role === 'free'

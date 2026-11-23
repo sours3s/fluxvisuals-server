@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FluxVisuals — клиент для Minecraft 1.21.11</title>
-<meta name="description" content="FluxVisuals для Minecraft 1.21.11 на Fabric: Keystrokes, Better F3, Dynamic Lights, Block Outline и другие модули. Всё включается в ClickGUI.">
+<meta name="description" content="FluxVisuals для Minecraft 1.21.11 на Fabric: ESP, Smooth Camera, Dynamic Lights, Block Outline и другие модули. Всё включается в ClickGUI.">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -64,12 +64,12 @@
               <div class="mock-mods" id="mockMods"></div>
             </div>
             <div class="mock-main">
-              <div class="mock-heading"><b id="mockName">Keystrokes</b><span class="switch on"></span></div>
+              <div class="mock-heading"><b id="mockName">Jump Circle</b><span class="switch on"></span></div>
               <p class="mock-desc" id="mockDesc"></p>
               <div class="mock-settings" id="mockSettings"></div>
             </div>
           </div>
-          <div class="mock-foot"><span>fluxvisuals / client</span><span>fabric 1.21.11</span></div>
+          <div class="mock-foot"><span>fluxvisuals / fabric</span><span>fabric 1.21.11</span></div>
         </div>
       </div>
     </div>
@@ -84,7 +84,7 @@
       </div>
       <div class="grid-3">
         <div class="feature"><div class="feature-ic">✦</div><h3>ESP</h3><p>Подсвечивает игроков и мобов в прямой видимости. Цели выбираются в настройках.</p></div>
-        <div class="feature"><div class="feature-ic">⌨</div><h3>Keystrokes</h3><p>Показывает нажатия WASD, мыши, пробела и шифта. Два стиля индикаторов: Dark и Glass.</p></div>
+        <div class="feature"><div class="feature-ic">◎</div><h3>Jump Circle</h3><p>Круг под ногами при прыжке. Режимы Pulse, Spiral, Nova и Blocks, с настройкой радиуса и длительности.</p></div>
         <div class="feature"><div class="feature-ic">▤</div><h3>Better F3</h3><p>Чистый оверлей вместо стандартного экрана отладки. Координаты, FPS, пинг и память.</p></div>
         <div class="feature"><div class="feature-ic">☀</div><h3>Dynamic Lights</h3><p>Свет от факелов, горящих сущностей и предметов в руке. Радиус и сила настраиваются.</p></div>
         <div class="feature"><div class="feature-ic">◫</div><h3>Block Outline</h3><p>Контур или оверлей на целевом блоке. Цвет, прозрачность и скорость анимации.</p></div>
@@ -98,7 +98,7 @@
       <div class="section-head">
         <div class="section-kicker">Доступ</div>
         <h2>Клиент бесплатный</h2>
-        <p>Аккаунт открывает доступ сразу. Скачивай лоадер из кабинета и запускай мод. Оплата и тарифы не нужны.</p>
+        <p>Аккаунт открывает доступ сразу. Скачивай лоадер из кабинета и запускай мод.</p>
       </div>
       <div class="plans">
         <div class="plan" style="grid-column:1/-1">
@@ -138,10 +138,10 @@
       </div>
       <div class="faq-list">
         <details class="faq-item"><summary>Можно ли получить бан за клиент?</summary><p>Клиент не отправляет игровые пакеты от твоего имени. Он рисует поверх игры и меняет только клиентскую картинку.</p></details>
-        <details class="faq-item"><summary>Сколько стоит клиент?</summary><p>Ничего. Доступ открывается сразу после регистрации, без оплаты и тарифов.</p></details>
+        <details class="faq-item"><summary>Сколько стоит доступ?</summary><p>Ничего. Доступ открывается сразу после регистрации.</p></details>
         <details class="faq-item"><summary>Можно ли играть без аккаунта?</summary><p>Нет. Лоадер проверяет аккаунт и привязывает его к HWID. Для сброса привязки напиши в поддержку.</p></details>
         <details class="faq-item"><summary>Сколько весит клиент?</summary><p>Лоадер около 65 МБ. Мод и библиотеки скачиваются при первом запуске, дальше запуск быстрый.</p></details>
-        <details class="faq-item"><summary>Лоадер не пускает после входа</summary><p>Проверь, что входишь тем же логином, что и на сайте. Если доступ не открывается, напиши в поддержку и укажи UID из кабинета.</p></details>
+        <details class="faq-item"><summary>Лоадер не пускает после входа</summary><p>Проверь, что входишь тем же логином, что и на сайте. Если доступ не открывается, напиши в поддержку и укажи логин из кабинета.</p></details>
       </div>
     </div>
   </section>
@@ -180,13 +180,12 @@
   const mockData = {
     Visuals: {
       modules: [
-        { name: 'Keystrokes', desc: 'Показывает нажатия клавиш WASD, мыши и пробела', settings: [
-          { label: 'Style', type: 'mode', value: 'Dark' },
-          { label: 'Show Mouse', type: 'bool', value: true },
-          { label: 'Show Space', type: 'bool', value: true },
-          { label: 'Show Sprint', type: 'bool', value: false },
-          { label: 'Key Size', type: 'range', value: 1.0, min: 0.5, max: 2.0 },
-          { label: 'Spacing', type: 'range', value: 3.0, min: 1.0, max: 8.0 }
+        { name: 'Jump Circle', desc: 'Круг под ногами при прыжке', settings: [
+          { label: 'Mode', type: 'mode', value: 'Pulse' },
+          { label: 'Radius', type: 'range', value: 0.5, min: 0.3, max: 1.0 },
+          { label: 'Block Radius', type: 'range', value: 4.0, min: 1.0, max: 8.0 },
+          { label: 'Time', type: 'range', value: 1000, min: 200, max: 2000 },
+          { label: 'Anim', type: 'range', value: 500, min: 100, max: 1000 }
         ]},
         { name: 'Smooth Camera', desc: 'Добавляет камере от первого лица плавность движения', settings: [
           { label: 'Delay', type: 'range', value: 5.0, min: 5.0, max: 50.0 }
