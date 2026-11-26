@@ -36,7 +36,7 @@ public class ModController : ControllerBase
         }
         if (string.IsNullOrWhiteSpace(downloadUrl))
         {
-            downloadUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.1.4/fluxvisuals-1.1.4.jar";
+            downloadUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.1.5/fluxvisuals-1.1.5.jar";
         }
 
         // Loader URL
@@ -54,8 +54,8 @@ public class ModController : ControllerBase
         return Ok(new
         {
             downloadUrl,
-            version = "1.1.4", // маркер версии мода: лоадер по нему определяет, что jar нужно перекачать
-            fileName = "fluxvisuals-1.1.4.jar",
+            version = "1.1.5", // маркер версии мода: лоадер по нему определяет, что jar нужно перекачать
+            fileName = "fluxvisuals-1.1.5.jar",
             loaderDownloadUrl = loaderUrl
         });
     }
