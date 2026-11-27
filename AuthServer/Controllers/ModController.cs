@@ -48,7 +48,7 @@ public class ModController : ControllerBase
         }
         if (string.IsNullOrWhiteSpace(loaderUrl))
         {
-            loaderUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.15-loader/FluxVisualsLoader.exe";
+            loaderUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.16-loader/FluxVisualsLoader.exe";
         }
 
         return Ok(new
