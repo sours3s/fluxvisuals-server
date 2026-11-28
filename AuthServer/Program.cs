@@ -41,6 +41,9 @@ builder.Services.Configure<JwtSettings>(opt =>
 builder.Services.AddSingleton<JwtService>();
 builder.Services.AddHttpClient();
 
+// Ссылки на мод и лоадер подтягиваются из релизов автоматически — задавать их вручную не нужно.
+builder.Services.AddHostedService<ReleaseSyncService>();
+
 // Catal: ключ ИИ только в env FLUXVISUALS_AI_KEY / Ai__ApiKey на сервере, никогда не в WebView.
 builder.Services.Configure<AiProviderOptions>(opt =>
 {
