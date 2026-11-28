@@ -19,8 +19,9 @@ var postgresUrl = builder.Configuration["DATABASE_URL"] ?? builder.Configuration
 if (!string.IsNullOrWhiteSpace(postgresUrl))
 {
     var pg = ParsePostgresUrl(postgresUrl);
+    var pgSslMode = builder.Configuration["PGSSLMODE"] ?? "Prefer";
     builder.Services.AddDbContext<AuthDbContext>(opt =>
-        opt.UseNpgsql($"Host={pg.host};Port={pg.port};Database={pg.database};Username={pg.user};Password={pg.password};SSL Mode=Require;Trust Server Certificate=true"));
+        opt.UseNpgsql($"Host={pg.host};Port={pg.port};Database={pg.database};Username={pg.user};Password={pg.password};SSL Mode={pgSslMode};Trust Server Certificate=true"));
 }
 else
 {
