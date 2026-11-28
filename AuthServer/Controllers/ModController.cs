@@ -3,6 +3,7 @@ using AuthServer.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace AuthServer.Controllers;
 
@@ -11,12 +12,10 @@ namespace AuthServer.Controllers;
 public class ModController : ControllerBase
 {
     private readonly AuthDbContext _db;
-    private readonly IConfiguration _configuration;
 
-    public ModController(AuthDbContext db, IConfiguration configuration)
+    public ModController(AuthDbContext db)
     {
         _db = db;
-        _configuration = configuration;
     }
 
     [HttpGet("version")]
@@ -27,37 +26,38 @@ public class ModController : ControllerBase
         if (settings == null)
             return NotFound();
 
-        // Приоритет: URL из админки (БД) → из appsettings (Mod:DownloadUrl) → по адресу запроса.
-        string downloadUrl = settings.ModDownloadUrl;
-        if (string.IsNullOrWhiteSpace(downloadUrl) ||
-            downloadUrl.StartsWith("CHANGE", StringComparison.OrdinalIgnoreCase))
-        {
-            downloadUrl = _configuration["Mod:DownloadUrl"] ?? "";
-        }
-        if (string.IsNullOrWhiteSpace(downloadUrl))
-        {
-            downloadUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.1.5/fluxvisuals-1.1.5.jar";
-        }
+        // Единственный источник ссылок — админ-панель (БД). Версия выводится из URL.
+        string modUrl = (settings.ModDownloadUrl ?? "").Trim();
+        string loaderUrl = (settings.LoaderDownloadUrl ?? "").Trim();
 
-        // Loader URL
-        string loaderUrl = settings.LoaderDownloadUrl;
-        if (string.IsNullOrWhiteSpace(loaderUrl) ||
-            loaderUrl.StartsWith("CHANGE", StringComparison.OrdinalIgnoreCase))
-        {
-            loaderUrl = _configuration["Loader:DownloadUrl"] ?? "";
-        }
-        if (string.IsNullOrWhiteSpace(loaderUrl))
-        {
-            loaderUrl = "https://github.com/sours3s/FluxVisuals/releases/download/v1.0.16-loader/FluxVisualsLoader.exe";
-        }
+        if (string.IsNullOrWhiteSpace(modUrl))
+            return BadRequest(new { error = "URL мода не задан в админ-панели" });
 
         return Ok(new
         {
-            downloadUrl,
-            version = "1.1.5", // маркер версии мода: лоадер по нему определяет, что jar нужно перекачать
-            fileName = "fluxvisuals-1.1.5.jar",
-            loaderDownloadUrl = loaderUrl
+            downloadUrl = modUrl,
+            version = VersionFromUrl(modUrl),
+            fileName = FileNameFromUrl(modUrl),
+            loaderDownloadUrl = loaderUrl,
+            loaderVersion = VersionFromUrl(loaderUrl)
         });
+    }
+
+    private static string FileNameFromUrl(string url)
+    {
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri)
+            ? Path.GetFileName(uri.AbsolutePath)
+            : "";
+    }
+
+    private static string VersionFromUrl(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return "";
+        var path = uri.AbsolutePath;
+        var match = Regex.Match(path, @"(?:^|/)v?(\d+(?:\.\d+){1,3})(?:[-_.][^/]*)?(?:/|$)");
+        if (!match.Success)
+            match = Regex.Match(path, @"[-_]v?(\d+(?:\.\d+){1,3})(?=[-_.]|$)");
+        return match.Success ? match.Groups[1].Value : "";
     }
 
     [HttpPost("version")]
