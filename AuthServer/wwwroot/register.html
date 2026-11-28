@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Регистрация — FluxVisuals</title>
+<script>if (window === window.top) { sessionStorage.setItem('fv_view', 'register'); location.replace('/'); }</script>
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -71,8 +72,8 @@
           method: 'POST',
           body: JSON.stringify({ username, password })
         });
-        if (l.res.ok && l.data.token) { saveToken(l.data.token); location.href = '/account.html'; return; }
-        location.href = '/login.html';
+        if (l.res.ok && l.data.token) { saveToken(l.data.token); fvGo('account'); return; }
+        fvGo('login');
         return;
       }
       errBox.textContent = data?.error || 'Не удалось зарегистрироваться';

@@ -35,6 +35,131 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+// ---------- fv-single-url v1: страницы открываются без смены адреса ----------
+const FV_VIEWS = {
+  login: '/login.html',
+  register: '/register.html',
+  account: '/account.html',
+  admin: '/admin/'
+};
+const FV_VIEW_BY_PATH = {
+  '/login.html': 'login',
+  '/register.html': 'register',
+  '/account.html': 'account',
+  '/admin/': 'admin',
+  '/admin/index.html': 'admin'
+};
+
+function fvViewFromHref(href) {
+  try {
+    const u = new URL(href, location.href);
+    if (u.origin !== location.origin) return null;
+    return FV_VIEW_BY_PATH[u.pathname] || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function fvPathFor(target) {
+  if (FV_VIEWS[target]) return FV_VIEWS[target];
+  const view = fvViewFromHref(target);
+  return view ? FV_VIEWS[view] : target;
+}
+
+const fvStyle = document.createElement('style');
+fvStyle.textContent = 'html.fv-view-open body > *:not(#fv-view-frame){display:none !important}' +
+  'html.fv-view-open body{overflow:hidden}';
+document.head.appendChild(fvStyle);
+
+function fvCloseView() {
+  const frame = document.getElementById('fv-view-frame');
+  if (frame) frame.remove();
+  document.documentElement.classList.remove('fv-view-open');
+}
+
+function fvBindFrame(frame) {
+  let doc;
+  try { doc = frame.contentDocument; } catch (e) { return; }
+  if (!doc || !doc.documentElement || doc.documentElement.dataset.fvBound === '1') return;
+  doc.documentElement.dataset.fvBound = '1';
+  doc.addEventListener('click', e => {
+    const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a) return;
+    const href = a.getAttribute('href');
+    const view = fvViewFromHref(href);
+    if (view) {
+      e.preventDefault();
+      fvOpenView(view);
+      return;
+    }
+    try {
+      const u = new URL(href, doc.location.href);
+      if (u.origin === location.origin && (u.pathname === '/' || u.pathname === '')) {
+        e.preventDefault();
+        fvCloseView();
+      }
+    } catch (err) {}
+  }, true);
+}
+
+function fvOpenView(target) {
+  const path = fvPathFor(target);
+  if (!path || typeof path !== 'string' || !path.startsWith('/')) {
+    location.href = path;
+    return;
+  }
+  let frame = document.getElementById('fv-view-frame');
+  if (!frame) {
+    frame = document.createElement('iframe');
+    frame.id = 'fv-view-frame';
+    frame.title = 'FluxVisuals';
+    frame.setAttribute('style', 'position:fixed;inset:0;width:100vw;height:100vh;border:0;margin:0;padding:0;z-index:2147483000;background:#0b0d12;display:block');
+    frame.addEventListener('load', () => fvBindFrame(frame));
+    document.body.appendChild(frame);
+  }
+  document.documentElement.classList.add('fv-view-open');
+  const absolute = new URL(path, location.href).href;
+  if (frame.src !== absolute) frame.src = path;
+  history.replaceState(null, '', '/');
+}
+
+function fvGo(target) {
+  if (target === '/' || target === 'home') {
+    if (window.parent && window.parent !== window && typeof window.parent.fvCloseView === 'function') {
+      window.parent.fvCloseView();
+    } else {
+      fvCloseView();
+    }
+    return;
+  }
+  const path = fvPathFor(target);
+  if (window.parent && window.parent !== window && typeof window.parent.fvOpenView === 'function') {
+    window.parent.fvOpenView(path);
+    return;
+  }
+  fvOpenView(path);
+}
+
+window.fvGo = fvGo;
+window.fvOpenView = fvOpenView;
+window.fvCloseView = fvCloseView;
+
+document.addEventListener('click', e => {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+  if (!a || (a.target && a.target !== '_self')) return;
+  const view = fvViewFromHref(a.getAttribute('href'));
+  if (!view) return;
+  e.preventDefault();
+  fvOpenView(view);
+}, true);
+
+const fvPendingView = sessionStorage.getItem('fv_view');
+if (fvPendingView) {
+  sessionStorage.removeItem('fv_view');
+  if (FV_VIEWS[fvPendingView]) fvOpenView(fvPendingView);
+}
+
 // Шапка сайта: состояние входа
 function initNav(page) {
   const box = document.getElementById('navActions');
@@ -53,14 +178,14 @@ function initNav(page) {
 
 async function siteLogout() {
   clearToken();
-  location.href = '/';
+  fvGo('/');
 }
 
 // Защита страниц кабинета
 async function requireAuth() {
-  if (!getToken()) { location.href = '/login.html'; return null; }
+  if (!getToken()) { fvGo('login'); return null; }
   const { res, data } = await apiJson('/auth/verify');
-  if (!res.ok || !data) { clearToken(); location.href = '/login.html'; return null; }
+  if (!res.ok || !data) { clearToken(); fvGo('login'); return null; }
   return data;
 }
 
